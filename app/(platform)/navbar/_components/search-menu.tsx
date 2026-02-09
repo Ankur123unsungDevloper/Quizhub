@@ -3,7 +3,7 @@ import { IoMdSearch } from "react-icons/io";
 
 const SearchMenu = () => {
   return (
-    <div className="flex relative justify-center">
+    <div className="flex-1 flex justify-center relative left-50">
       <div className="relative w-120 h-12">
         {/* Search Icon */}
         <IoMdSearch
@@ -13,7 +13,7 @@ const SearchMenu = () => {
         {/* Input */}
         <Input
           placeholder="Search...."
-          className="pl-16 text-6xl w-full h-full rounded-2xl border-3"
+          className="pl-14 text-6xl w-full h-full rounded-2xl border-3"
         />
       </div>
     </div>
