@@ -54,7 +54,15 @@ const components: { title: string; href: string; description: string }[] = [
 
 export function Menu() {
   const pathname = usePathname();
-  const isActive = pathname === "/";
+
+  const isActiveRoute = (route: string) =>
+    pathname === route || pathname.startsWith(route + "/")
+
+  const isHome = pathname === "/";
+  const isQuizzes = isActiveRoute("/quizzes");
+  const isAIBook = isActiveRoute("/aibook")
+  
+  const activeStyle = "text-[#FF8D28] border-b-4 border-[#FF8D28]"
 
   return (
     <NavigationMenu>
@@ -62,8 +70,8 @@ export function Menu() {
         <NavigationMenuItem>
           <NavigationMenuLink asChild className={navigationMenuTriggerStyle({
             className: `
-              text-sm font-medium hover:text-[#FF8D28] w-53 h-10
-              ${isActive ? "text-[#FF8D28] border-b-4 border-[#FF8D28]" : ""}
+              text-sm font-medium hover:text-[#FF8D28] w-53 h-10 bg-zinc-800/50
+              ${isHome ? activeStyle : ""}
             `,
           })}
           >
@@ -76,7 +84,35 @@ export function Menu() {
           </NavigationMenuLink>
         </NavigationMenuItem>
         <NavigationMenuItem className="hidden md:flex">
-          <NavigationMenuTrigger className="text-sm w-53 h-10 hover:text-[#FF8D28]">Categories</NavigationMenuTrigger>
+          <NavigationMenuTrigger
+            className={`
+              text-sm w-53 h-10 hover:text-[#FF8D28] bg-zinc-800/50
+              ${isQuizzes ? activeStyle : ""}
+            `}
+          >
+            <Link
+              href="/quizzes"
+              className="text-sm font-medium"
+            >
+              Quizzes
+            </Link>
+          </NavigationMenuTrigger>
+          <NavigationMenuContent className="min-w-screen py-4 items-center justify-center">
+            <ul className="grid gap-2 md:w-125 md:grid-cols-2 lg:w-150">
+              {components.map((component) => (
+                <ListItem
+                  key={component.title}
+                  title={component.title}
+                  href={component.href}
+                >
+                  {component.description}
+                </ListItem>
+              ))}
+            </ul>
+          </NavigationMenuContent>
+        </NavigationMenuItem>
+        <NavigationMenuItem className="hidden md:flex">
+          <NavigationMenuTrigger className="text-sm w-53 h-10 hover:text-[#FF8D28] bg-zinc-800/50">Categories</NavigationMenuTrigger>
           <NavigationMenuContent>
             <ul className="grid w-full gap-2 md:w-125 md:grid-cols-2 lg:w-150">
               {components.map((component) => (
@@ -92,7 +128,7 @@ export function Menu() {
           </NavigationMenuContent>
         </NavigationMenuItem>
         <NavigationMenuItem className="hidden md:flex">
-          <NavigationMenuTrigger className="text-sm w-53 h-10 hover:text-[#FF8D28]">Classes Videos</NavigationMenuTrigger>
+          <NavigationMenuTrigger className="text-sm w-53 h-10 hover:text-[#FF8D28] bg-zinc-800/50">Classes Videos</NavigationMenuTrigger>
           <NavigationMenuContent>
             <ul className="grid w-full gap-2 md:w-125 md:grid-cols-2 lg:w-150">
               {components.map((component) => (
@@ -110,9 +146,10 @@ export function Menu() {
         <NavigationMenuItem>
           <NavigationMenuLink asChild className={navigationMenuTriggerStyle({
             className: `
-              text-sm font-medium hover:text-[#FF8D28] w-53 h-10
-            `,
-          })}
+                text-sm font-medium hover:text-[#FF8D28] w-53 h-10 bg-zinc-800/50
+                ${isAIBook ? activeStyle : ""}
+              `,
+            })}
           >
             <Link
               href="/aibook"
@@ -123,23 +160,7 @@ export function Menu() {
           </NavigationMenuLink>
         </NavigationMenuItem>
         <NavigationMenuItem className="hidden md:flex">
-          <NavigationMenuTrigger className="text-sm w-53 h-10 hover:text-[#FF8D28]">Components</NavigationMenuTrigger>
-          <NavigationMenuContent className="w-full">
-            <ul className="grid w-full gap-2 md:w-125 md:grid-cols-2 lg:w-150">
-              {components.map((component) => (
-                <ListItem
-                  key={component.title}
-                  title={component.title}
-                  href={component.href}
-                >
-                  {component.description}
-                </ListItem>
-              ))}
-            </ul>
-          </NavigationMenuContent>
-        </NavigationMenuItem>
-        <NavigationMenuItem className="hidden md:flex">
-          <NavigationMenuTrigger className="text-sm w-53 h-10 hover:text-[#FF8D28]">Community</NavigationMenuTrigger>
+          <NavigationMenuTrigger className="text-sm w-53 h-10 hover:text-[#FF8D28] bg-zinc-800/50">Community</NavigationMenuTrigger>
           <NavigationMenuContent>
             <ul className="grid w-full gap-2 md:w-125 md:grid-cols-2 lg:w-150">
               {components.map((component) => (
