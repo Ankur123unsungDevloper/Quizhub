@@ -1,4 +1,18 @@
+"use client";
+
 import { Separator } from "@/components/ui/separator";
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from "@/components/ui/combobox";
+import { InputGroupAddon } from "@/components/ui/input-group";
+
+import { GlobeIcon } from "lucide-react";
+
 import Community from "./_components/community";
 import Company from "./_components/company";
 import Legal from "./_components/legal";
@@ -8,6 +22,8 @@ import Social from "./_components/social";
 import Update from "./_components/update";
 
 const Footer = () => {
+  const frameworks = ["Next.js", "SvelteKit", "Nuxt.js", "Remix", "Astro"]
+  
   return (
     <div className="flex items-center justify-center w-full h-full bg-zinc-800 p-10">
       <div className="flex flex-col items-center justify-center h-full">
@@ -19,8 +35,29 @@ const Footer = () => {
           <Community />
           <Social />
         </div>
-        <div className="flex justify-start items-start w-full mt-15">
-          <Update />
+        <div className="flex flex-row items-center justify-center w-full gap-x-30">
+          <div className="flex justify-start items-start w-full mt-15">
+            <Update />
+          </div>
+          <div className="flex justify-end items-end w-full">
+            <Combobox items={frameworks}>
+              <ComboboxInput placeholder="Language">
+                <InputGroupAddon>
+                  <GlobeIcon />
+                </InputGroupAddon>
+              </ComboboxInput>
+              <ComboboxContent>
+                <ComboboxEmpty>No items found.</ComboboxEmpty>
+                <ComboboxList>
+                  {(item) => (
+                    <ComboboxItem key={item} value={item}>
+                      {item}
+                    </ComboboxItem>
+                  )}
+                </ComboboxList>
+              </ComboboxContent>
+            </Combobox>
+          </div>
         </div>
         <Separator className="my-10 border-zinc-700 w-full" />
         <p className="text-sm text-muted-foreground">
