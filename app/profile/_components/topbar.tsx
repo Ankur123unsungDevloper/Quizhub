@@ -11,7 +11,7 @@ const Topbar = () => {
     <div className="flex items-center w-full bg-zinc-800 px-4 py-3 rounded-lg relative">
       
       {/* Back Button */}
-      <Button
+      <Button asChild
         size="icon"
         onClick={() => router.back()}
         className="bg-[#FF8D28] hover:bg-[#FF8D28]/90 text-white rounded-full"

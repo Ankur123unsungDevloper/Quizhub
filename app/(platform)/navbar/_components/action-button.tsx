@@ -25,7 +25,7 @@ const ActionButton = () => {
   return (
     <div>
       {!isAuthenticated && !isLoading && (
-        <Button className="bg-[#FF8D28] text-white hover:bg-[#FF8D28]/90 w-30 text-xl">
+        <Button asChild className="bg-[#FF8D28] text-white hover:bg-[#FF8D28]/90 w-30 text-xl">
           <Link href="/sign-in">
             Login
           </Link>

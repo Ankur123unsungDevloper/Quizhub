@@ -106,7 +106,7 @@ function InputGroupButton({
 }: Omit<React.ComponentProps<typeof Button>, "size"> &
   VariantProps<typeof inputGroupButtonVariants>) {
   return (
-    <Button
+    <Button asChild
       type={type}
       data-size={size}
       variant={variant}

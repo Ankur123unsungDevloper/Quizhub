@@ -40,7 +40,7 @@ const Topbar = () => {
         className="flex overflow-x-auto scrollbar-hide space-x-3 px-12"
       >
         {buttons.map((num) => (
-          <Button key={num} className="shrink-0 bg-zinc-800 text-white">
+          <Button asChild key={num} className="shrink-0 bg-zinc-800 text-white">
             <Link href="/quizzes">Button {num}</Link>
           </Button>
         ))}

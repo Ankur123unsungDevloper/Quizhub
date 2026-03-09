@@ -122,19 +122,19 @@ export function Menu() {
                   <h3 className="text-2xl font-semibold text-white">Discover Quizzes</h3>
                 </div>
                 <div className="flex flex-col items-center justify-center w-full gap-4 mt-6">
-                  <Button className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
+                  <Button asChild className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
                     <Link href="/quizzes/daily">Daily Quiz</Link>
                   </Button>
-                  <Button className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
+                  <Button asChild className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
                     <Link href="/quizzes/weekly">Weekly Challenge</Link>
                   </Button>
-                  <Button className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
+                  <Button asChild className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
                     <Link href="/quizzes/mock">Mock Tests</Link>
                   </Button>
-                  <Button className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
+                  <Button asChild className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
                     <Link href="/quizzes/popular">Popular Quizzes</Link>
                   </Button>
-                  <Button className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
+                  <Button asChild className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
                     <Link href="/quizzes/new">New Quizzes</Link>
                   </Button>
                 </div>
@@ -179,7 +179,7 @@ export function Menu() {
                   </div>
                   <div className="flex flex-wrap items-center justify-center w-full gap-4 mt-4">
                     {filters.map((filter, index) => (
-                      <Button
+                      <Button asChild
                         key={index}
                         className="shrink-0 bg-zinc-800 hover:bg-zinc-800/50 text-white"
                       >
@@ -216,16 +216,16 @@ export function Menu() {
                   <h3 className="text-2xl font-semibold text-white">Orientation</h3>
                 </div>
                 <div className="grid grid-cols-2 w-full gap-4">
-                  <Button className="shrink-0 bg-zinc-800 hover:bg-zinc-800/50 text-white">
+                  <Button asChild className="shrink-0 bg-zinc-800 hover:bg-zinc-800/50 text-white">
                     <Link href="/categories">All</Link>
                   </Button>
-                  <Button className="shrink-0 bg-zinc-800 hover:bg-zinc-800/50 text-white">
+                  <Button asChild className="shrink-0 bg-zinc-800 hover:bg-zinc-800/50 text-white">
                     <Link href="/categories/school">School</Link>
                   </Button>
-                  <Button className="shrink-0 bg-zinc-800 hover:bg-zinc-800/50 text-white">
+                  <Button asChild className="shrink-0 bg-zinc-800 hover:bg-zinc-800/50 text-white">
                     <Link href="/categories/college">College</Link>
                   </Button>
-                  <Button className="shrink-0 bg-zinc-800 hover:bg-zinc-800/50 text-white">
+                  <Button asChild className="shrink-0 bg-zinc-800 hover:bg-zinc-800/50 text-white">
                     <Link href="/categories/competition">Competition</Link>
                   </Button>
                 </div>
@@ -233,7 +233,7 @@ export function Menu() {
                   <h3 className="text-xl font-semibold text-white">Quiz in Your Language</h3>
                 </div>
                 <div className="grid grid-cols-2 w-full gap-4">
-                  <Button className="shrink-0 bg-zinc-800 hover:bg-zinc-800/50 text-white">
+                  <Button asChild className="shrink-0 bg-zinc-800 hover:bg-zinc-800/50 text-white">
                     <Link href="/categories">Hindi</Link>
                   </Button>
                 </div>
@@ -264,16 +264,16 @@ export function Menu() {
                   <h3 className="text-2xl font-semibold text-white">Popular Search</h3>
                 </div>
                 <div className="flex flex-col gap-4 mt-8">
-                  <Button className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white">
+                  <Button asChild className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white">
                     <Link href="/categories/popular-search">DSA</Link>
                   </Button>
-                  <Button className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white">
+                  <Button asChild className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white">
                     <Link href="/categories/popular-search">Web Development</Link>
                   </Button>
-                  <Button className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white">
+                  <Button asChild className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white">
                     <Link href="/categories/popular-search">Web Development</Link>
                   </Button>
-                  <Button className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white">
+                  <Button asChild className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white">
                     <Link href="/categories/popular-search">Web Development</Link>
                   </Button>
                 </div>
@@ -291,43 +291,43 @@ export function Menu() {
                   <h3 className="text-2xl font-semibold text-white">Discover Video</h3>
                 </div>
                 <div className="flex flex-col w-full items-center justify-center">
-                  <Button className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
+                  <Button asChild className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
                     <HiLightBulb className="size-6" />
                     <Link href="/">
                       Recommended
                     </Link>
                   </Button>
-                  <Button className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
+                  <Button asChild className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
                     <GiNetworkBars className="size-6" />
                     <Link href="/">
                       Most Viewed
                     </Link>
                   </Button>
-                  <Button className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
+                  <Button asChild className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
                     <MdThumbUp className="size-6" />
                     <Link href="/">
                       Top Rated
                     </Link>
                   </Button>
-                  <Button className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
+                  <Button asChild className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
                     <MdPlaylistPlay className="size-6" />
                     <Link href="/">
                       Playlist
                     </Link>
                   </Button>
-                  <Button className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
+                  <Button asChild className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
                     <GrChannel className="size-6" />
                     <Link href="/">
                       Channels
                     </Link>
                   </Button>
-                  <Button className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
+                  <Button asChild className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
                     <LiaRandomSolid className="size-6" />
                     <Link href="/">
                       Randoms
                     </Link>
                   </Button>
-                  <Button className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
+                  <Button asChild className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
                     <HiLightBulb className="size-6" />
                     <Link href="/">
                       Newest
@@ -400,16 +400,16 @@ export function Menu() {
                   <h3 className="text-2xl font-semibold text-white">Trending Search</h3>
                 </div>
                 <div className="flex flex-col gap-4 mt-8">
-                  <Button className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white">
+                  <Button asChild className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white">
                     <Link href="/categories/popular-search">DSA</Link>
                   </Button>
-                  <Button className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white">
+                  <Button asChild className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white">
                     <Link href="/categories/popular-search">Web Development</Link>
                   </Button>
-                  <Button className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white">
+                  <Button asChild className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white">
                     <Link href="/categories/popular-search">Web Development</Link>
                   </Button>
-                  <Button className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white">
+                  <Button asChild className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white">
                     <Link href="/categories/popular-search">Web Development</Link>
                   </Button>
                 </div>

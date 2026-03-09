@@ -13,7 +13,7 @@ const Update = () => {
           placeholder="Enter your email"
           className="bg-zinc-700 text-muted-foreground placeholder:text-muted-foreground focus:outline-none"
         />
-        <Button className="bg-[#FF8D28] text-white hover:bg-[#FF8D28]/90 transition">
+        <Button asChild className="bg-[#FF8D28] text-white hover:bg-[#FF8D28]/90 transition">
           Subscribe
         </Button>
       </div>

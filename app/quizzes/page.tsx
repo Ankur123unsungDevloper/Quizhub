@@ -80,7 +80,7 @@ const Quizzespage = () => {
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button
+                      <Button asChild
                         variant="ghost"
                         size="icon"
                         className="shrink-0 hover:bg-zinc-700"
