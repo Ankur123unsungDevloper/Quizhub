@@ -4,11 +4,39 @@ import { v } from "convex/values";
 export default defineSchema({
   // To define users of the platform, allowing for authentication, role-based access control, and personalized experiences
   users: defineTable({
+    clerkId: v.optional(v.string()),
     name: v.string(),
     email: v.string(),
     role: v.union(v.literal("student"), v.literal("admin")),
     createdAt: v.number(),
-  }).index("by_email", ["email"]),
+  })
+  .index("by_clerk", ["clerkId"])
+  .index("by_email", ["email"]),
+
+  // To store additional profile information for users, allowing for personalized learning paths and better user experience
+  userProfiles: defineTable({
+    userId: v.id("users"),
+
+    preferredName: v.optional(v.string()),
+
+    educationType: v.union(
+      v.literal("school"),
+      v.literal("college"),
+      v.literal("competitive")
+    ),
+
+    class: v.optional(v.string()),
+    branch: v.optional(v.string()),
+    targetExam: v.optional(v.string()),
+    targetYear: v.optional(v.number()),
+
+    strongSubjects: v.optional(v.string()),
+    weakSubjects: v.optional(v.string()),
+
+    studyHoursPerDay: v.optional(v.number()),
+
+    updatedAt: v.number(),
+  }).index("by_user", ["userId"]),
   
   // To define exams, allowing for categorization and organization of questions based on different types of exams
   exams: defineTable({

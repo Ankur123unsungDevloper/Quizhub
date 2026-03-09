@@ -9,6 +9,8 @@
  */
 
 import type * as attempts from "../attempts.js";
+import type * as userProfiles from "../userProfiles.js";
+import type * as users from "../users.js";
 
 import type {
   ApiFromModules,
@@ -18,6 +20,8 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   attempts: typeof attempts;
+  userProfiles: typeof userProfiles;
+  users: typeof users;
 }>;
 
 /**
