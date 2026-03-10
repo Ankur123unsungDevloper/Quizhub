@@ -8,7 +8,13 @@
  * @module
  */
 
+import type * as ai_generateImage from "../ai/generateImage.js";
+import type * as ai_generateQuestions from "../ai/generateQuestions.js";
+import type * as ai_prompts from "../ai/prompts.js";
 import type * as attempts from "../attempts.js";
+import type * as cards from "../cards.js";
+import type * as exams from "../exams.js";
+import type * as questions from "../questions.js";
 import type * as userProfiles from "../userProfiles.js";
 import type * as users from "../users.js";
 
@@ -19,7 +25,13 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  "ai/generateImage": typeof ai_generateImage;
+  "ai/generateQuestions": typeof ai_generateQuestions;
+  "ai/prompts": typeof ai_prompts;
   attempts: typeof attempts;
+  cards: typeof cards;
+  exams: typeof exams;
+  questions: typeof questions;
   userProfiles: typeof userProfiles;
   users: typeof users;
 }>;

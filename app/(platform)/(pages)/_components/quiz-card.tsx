@@ -1,0 +1,186 @@
+"use client";
+
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import Image from "next/image";
+import Link from "next/link";
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+
+import { FaEye } from "react-icons/fa";
+import { BsThreeDotsVertical } from "react-icons/bs";
+import { CgPlayListAdd } from "react-icons/cg";
+import { MdPlaylistRemove } from "react-icons/md";
+
+type CardData = {
+  _id: string;
+  name: string;
+  description?: string;
+  imageUrl?: string;
+  viewCount?: number;
+  cardType: "exam" | "subject" | "topic";
+  parentName?: string;
+  examName?: string;
+  category?: string;
+  difficultyWeight?: number;
+};
+
+// ─── Category color mapping ───────────────────────────────────────────────────
+const categoryColors: Record<string, string> = {
+  school: "bg-blue-900/50 text-blue-300",
+  college: "bg-purple-900/50 text-purple-300",
+  competitive: "bg-orange-900/50 text-orange-300",
+  exam: "bg-green-900/50 text-green-300",
+  subject: "bg-yellow-900/50 text-yellow-300",
+  topic: "bg-pink-900/50 text-pink-300",
+};
+
+// ─── Fallback gradient based on card type ────────────────────────────────────
+const fallbackGradients: Record<string, string> = {
+  exam: "from-orange-900 to-zinc-900",
+  subject: "from-blue-900 to-zinc-900",
+  topic: "from-purple-900 to-zinc-900",
+};
+
+export const QuizCard = ({ card }: { card: CardData }) => {
+  const incrementViewCount = useMutation(api.cards.incrementViewCount);
+
+  const groupLabel =
+    card.parentName ??
+    card.examName ??
+    card.category ??
+    card.cardType;
+
+  const handleClick = () => {
+    incrementViewCount({
+      entityType: card.cardType,
+      entityId: card._id,
+    });
+  };
+
+  return (
+    <Link
+      href={`/cards/${card.cardType}/${card._id}`}
+      onClick={handleClick}
+      className="block hover:bg-zinc-900 p-2 rounded-xl transition duration-200"
+    >
+      {/* Image */}
+      <Card className="bg-zinc-900 border-zinc-800 hover:border-[#FF8D28] overflow-hidden transition duration-200">
+        <CardContent className="p-0 relative h-48">
+          {card.imageUrl ? (
+            <Image
+              src={card.imageUrl}
+              alt={card.name}
+              fill
+              className="object-cover"
+            />
+          ) : (
+            // Fallback gradient when no image yet
+            <div
+              className={`w-full h-full bg-linear-to-br ${
+                fallbackGradients[card.cardType]
+              } flex items-center justify-center`}
+            >
+              <p className="text-white/20 text-4xl font-bold uppercase">
+                {card.name.charAt(0)}
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Card Info */}
+      <div className="flex flex-col py-2 px-1">
+
+        {/* Group label + view count */}
+        <div className="flex items-center justify-between w-full">
+          <span
+            className={`text-xs px-2 py-1 rounded-full capitalize ${
+              categoryColors[card.category ?? card.cardType] ??
+              "bg-zinc-800 text-zinc-400"
+            }`}
+          >
+            {groupLabel}
+          </span>
+          <div className="flex items-center gap-1 text-sm text-zinc-500">
+            <FaEye className="size-3" />
+            <span>{card.viewCount ?? 0}</span>
+          </div>
+        </div>
+
+        {/* Title */}
+        <h2 className="text-sm font-medium text-white mt-2 hover:text-[#FF8D28] transition">
+          {card.name}
+        </h2>
+
+        {/* Description + dropdown */}
+        <div className="flex items-start gap-x-2 mt-1">
+          <p className="flex-1 text-xs text-zinc-500 leading-relaxed line-clamp-2">
+            {card.description ?? `Practice ${card.name} with AI-generated questions`}
+          </p>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              asChild
+              onClick={(e) => e.preventDefault()} // prevent card navigation
+            >
+              <Button
+                variant="ghost"
+                size="icon"
+                className="shrink-0 hover:bg-zinc-700 h-7 w-7"
+              >
+                <BsThreeDotsVertical className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuGroup>
+                <DropdownMenuItem
+                  onClick={(e) => e.preventDefault()}
+                >
+                  <CgPlayListAdd className="h-5 w-5 mr-2" />
+                  Add to your list
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={(e) => e.preventDefault()}
+                >
+                  <MdPlaylistRemove className="h-5 w-5 mr-2" />
+                  Remove from your list
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+    </Link>
+  );
+};
+
+// ─── Skeleton Card ────────────────────────────────────────────────────────────
+export const QuizCardSkeleton = () => (
+  <div className="p-2 rounded-xl animate-pulse">
+    <div className="bg-zinc-800 rounded-xl h-48 w-full" />
+    <div className="flex items-center justify-between mt-3 px-1">
+      <div className="bg-zinc-800 rounded-full h-5 w-20" />
+      <div className="bg-zinc-800 rounded h-4 w-10" />
+    </div>
+    <div className="mt-2 px-1 space-y-2">
+      <div className="bg-zinc-800 rounded h-4 w-40" />
+      <div className="bg-zinc-800 rounded h-3 w-full" />
+      <div className="bg-zinc-800 rounded h-3 w-4/5" />
+    </div>
+  </div>
+);
+
+export const QuizCardSkeletonGrid = () => (
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+    {Array.from({ length: 6 }).map((_, i) => (
+      <QuizCardSkeleton key={i} />
+    ))}
+  </div>
+);

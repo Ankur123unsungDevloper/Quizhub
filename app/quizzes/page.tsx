@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { Pagenation } from "@/components/pagination";
+import { QuizPagination } from "@/components/quiz-pagination";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -80,7 +80,7 @@ const Quizzespage = () => {
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button asChild
+                      <Button
                         variant="ghost"
                         size="icon"
                         className="shrink-0 hover:bg-zinc-700"
@@ -108,7 +108,7 @@ const Quizzespage = () => {
           ))}
         </div>
       </div>
-      <Pagenation />
+      <QuizPagination />
       <Footer />
     </div>
   );

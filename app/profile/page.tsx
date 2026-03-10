@@ -166,14 +166,14 @@ const ProfilePage = () => {
             </p>
           </div>
           <div className="ml-auto flex gap-3">
-            <Button asChild
+            <Button
               onClick={() => setEditOpen(true)}
               className="bg-[#FF8D28] hover:bg-[#ff8d28d9] text-white"
             >
               Edit Profile
             </Button>
             <SignOutButton redirectUrl="/">
-              <Button asChild variant="destructive">
+              <Button variant="destructive">
                 Logout
               </Button>
             </SignOutButton>
@@ -375,7 +375,7 @@ const ProfilePage = () => {
             {isEditing && (
               <div className="flex flex-wrap gap-2">
                 {subjectMap[educationType]?.map((sub) => (
-                  <Button asChild
+                  <Button
                     key={sub}
                     size="sm"
                     variant={strongSubjects.includes(sub) ? "default" : "outline"}
@@ -422,7 +422,7 @@ const ProfilePage = () => {
             {isEditing && (
               <div className="flex flex-wrap gap-2">
                 {subjectMap[educationType]?.map((sub) => (
-                  <Button asChild
+                  <Button
                     key={sub}
                     variant="outline"
                     size="sm"
@@ -480,14 +480,14 @@ const ProfilePage = () => {
             </div>
           </div>
           <div className="flex justify-end gap-3">
-            <Button asChild
+            <Button
               disabled={isEditing}
               onClick={() => setIsEditing(true)}
               className="bg-blue-500 hover:bg-blue-600 text-white"
             >
               Edit
             </Button>
-            <Button asChild
+            <Button
               disabled={!isEditing}
               onClick={handleSaveEducation}
               className="bg-[#FF8D28] hover:bg-[#ff8d28d9] text-white"
@@ -524,7 +524,7 @@ const ProfilePage = () => {
           <div className="bg-zinc-900 rounded-xl p-6 w-full max-w-5xl max-h-[90vh] overflow-y-auto">
             <UserProfile routing="hash" />
             <div className="flex justify-end mt-4">
-              <Button asChild onClick={() => setEditOpen(false)}>
+              <Button onClick={() => setEditOpen(false)}>
                 Close
               </Button>
             </div>

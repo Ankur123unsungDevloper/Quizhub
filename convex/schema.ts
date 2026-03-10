@@ -47,20 +47,26 @@ export default defineSchema({
       v.literal("competitive"),
       v.literal("college")
     ),
+    imageUrl: v.optional(v.string()), // ✅ new
+    viewCount: v.optional(v.number()), // ✅ new
     createdAt: v.number(),
   }).index("by_category", ["category"]),
-  
-  // To define subjects within exams, allowing for better organization and categorization of questions
+
+  // Update subjects table — add imageUrl
   subjects: defineTable({
     examId: v.id("exams"),
     name: v.string(),
+    imageUrl: v.optional(v.string()), // ✅ new
+    viewCount: v.optional(v.number()), // ✅ new
   }).index("by_exam", ["examId"]),
 
-  // To define specific topics within subjects, allowing for more granular organization of questions and personalized learning paths
+  // Update topics table — add imageUrl
   topics: defineTable({
     subjectId: v.id("subjects"),
     name: v.string(),
     difficultyWeight: v.number(),
+    imageUrl: v.optional(v.string()), // ✅ new
+    viewCount: v.optional(v.number()), // ✅ new
   }).index("by_subject", ["subjectId"]),
 
   // To store questions for exams, allowing for structured question management and retrieval based on various criteria

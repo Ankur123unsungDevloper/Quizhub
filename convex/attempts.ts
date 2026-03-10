@@ -1,120 +1,140 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
+import { mutation, action } from "./_generated/server";
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { api } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 
-const requireAuth = async (ctx: any) => {
-  const identity = await ctx.auth.getUserIdentity();
-  if (!identity) {
-    throw new Error("Not authenticated");
-  }
-  return identity.subject;
-};
-
-export const createAttempt = mutation({
+// ─── Save full attempt ────────────────────────────────────────────────────────
+export const saveAttempt = mutation({
   args: {
+    userId: v.id("users"),
     testId: v.id("tests"),
+    score: v.number(),
+    accuracy: v.number(),
+    timeTakenSeconds: v.number(),
+    startedAt: v.number(),
+    completedAt: v.number(),
   },
   handler: async (ctx, args) => {
-    const userId = await requireAuth(ctx);
+    return await ctx.db.insert("attempts", { ...args });
+  },
+});
 
-    const test = await ctx.db.get(args.testId);
-    if (!test) {
-      throw new Error("Test not found");
+// ─── Save per question answers ────────────────────────────────────────────────
+export const saveAttemptAnswers = mutation({
+  args: {
+    attemptId: v.id("attempts"),
+    answers: v.array(
+      v.object({
+        questionId: v.id("questions"),
+        selectedOptionIndex: v.number(),
+        isCorrect: v.boolean(),
+        timeSpentSeconds: v.number(),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    for (const answer of args.answers) {
+      await ctx.db.insert("attemptAnswers", {
+        attemptId: args.attemptId,
+        ...answer,
+      });
     }
-
-    const attemptId = await ctx.db.insert("attempts", {
-      userId,
-      testId: args.testId,
-      score: 0,
-      accuracy: 0,
-      timeTakenSeconds: 0,
-      startedAt: Date.now(),
-      completedAt: 0,
-    });
-
-    return attemptId;
   },
 });
 
-export const saveAnswer = mutation({
+// ─── Update topic stats ───────────────────────────────────────────────────────
+export const updateTopicStats = mutation({
   args: {
-    attemptId: v.id("attempts"),
-    questionId: v.id("questions"),
-    selectedOptionIndex: v.number(),
-    timeSpentSeconds: v.number(),
+    userId: v.id("users"),
+    topicId: v.id("topics"),
+    attempted: v.number(),
+    correct: v.number(),
   },
   handler: async (ctx, args) => {
-    const userId = await requireAuth(ctx);
+    const existing = await ctx.db
+      .query("userTopicStats")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .filter((q) => q.eq(q.field("topicId"), args.topicId))
+      .first();
 
-    const attempt = await ctx.db.get(args.attemptId);
-    if (!attempt) throw new Error("Attempt not found");
-    if (attempt.userId !== userId)
-      throw new Error("Unauthorized");
+    const accuracyPercentage = Math.round(
+      (args.correct / args.attempted) * 100
+    );
 
-    const question = await ctx.db.get(args.questionId);
-    if (!question) throw new Error("Question not found");
+    if (existing) {
+      const newAttempted = existing.attempted + args.attempted;
+      const newCorrect = existing.correct + args.correct;
+      const newAccuracy = Math.round((newCorrect / newAttempted) * 100);
 
-    const isCorrect =
-      question.correctOptionIndex === args.selectedOptionIndex;
-
-    return await ctx.db.insert("attemptAnswers", {
-      attemptId: args.attemptId,
-      questionId: args.questionId,
-      selectedOptionIndex: args.selectedOptionIndex,
-      isCorrect,
-      timeSpentSeconds: args.timeSpentSeconds,
-    });
+      await ctx.db.patch(existing._id, {
+        attempted: newAttempted,
+        correct: newCorrect,
+        accuracyPercentage: newAccuracy,
+        lastUpdated: Date.now(),
+      });
+    } else {
+      await ctx.db.insert("userTopicStats", {
+        userId: args.userId,
+        topicId: args.topicId,
+        attempted: args.attempted,
+        correct: args.correct,
+        accuracyPercentage,
+        lastUpdated: Date.now(),
+      });
+    }
   },
 });
 
-export const submitAttempt = mutation({
+// ─── Master action — called from frontend ────────────────────────────────────
+export const saveQuizResult = action({
   args: {
-    attemptId: v.id("attempts"),
+    userId: v.id("users"),
+    testId: v.id("tests"),
+    topicId: v.id("topics"),
+    score: v.number(),
+    accuracy: v.number(),
+    timeTakenSeconds: v.number(),
+    startedAt: v.number(),
+    completedAt: v.number(),
+    answers: v.array(
+      v.object({
+        questionId: v.id("questions"),
+        selectedOptionIndex: v.number(),
+        isCorrect: v.boolean(),
+        timeSpentSeconds: v.number(),
+      })
+    ),
   },
-  handler: async (ctx, args) => {
-    const userId = await requireAuth(ctx);
+  handler: async (ctx, args): Promise<{ success: boolean; attemptId: Id<"attempts"> }> => { // ✅ return type added
+    // 1. Save attempt
+    const attemptId: Id<"attempts"> = await ctx.runMutation( // ✅ type added
+      api.attempts.saveAttempt,
+      {
+        userId: args.userId,
+        testId: args.testId,
+        score: args.score,
+        accuracy: args.accuracy,
+        timeTakenSeconds: args.timeTakenSeconds,
+        startedAt: args.startedAt,
+        completedAt: args.completedAt,
+      }
+    );
 
-    const attempt = await ctx.db.get(args.attemptId);
-    if (!attempt) throw new Error("Attempt not found");
-    if (attempt.userId !== userId)
-      throw new Error("Unauthorized");
-
-    const answers = await ctx.db
-      .query("attemptAnswers")
-      .withIndex("by_attempt", (q) =>
-        q.eq("attemptId", args.attemptId)
-      )
-      .collect();
-
-    const total = answers.length;
-    const correct = answers.filter((a) => a.isCorrect).length;
-
-    const accuracy = total === 0 ? 0 : (correct / total) * 100;
-
-    const updatedAttempt = await ctx.db.patch(args.attemptId, {
-      score: correct,
-      accuracy,
-      completedAt: Date.now(),
-      timeTakenSeconds:
-        Date.now() - attempt.startedAt,
+    // 2. Save individual answers
+    await ctx.runMutation(api.attempts.saveAttemptAnswers, {
+      attemptId,
+      answers: args.answers,
     });
 
-    return updatedAttempt;
-  },
-});
+    // 3. Update topic stats
+    const correct = args.answers.filter((a) => a.isCorrect).length;
+    await ctx.runMutation(api.attempts.updateTopicStats, {
+      userId: args.userId,
+      topicId: args.topicId,
+      attempted: args.answers.length,
+      correct,
+    });
 
-export const getUserAttempts = query({
-  handler: async (ctx) => {
-    const userId = await requireAuth(ctx);
-
-    return await ctx.db
-      .query("attempts")
-      .withIndex("by_user", (q) =>
-        q.eq("userId", userId)
-      )
-      .order("desc")
-      .collect();
+    return { success: true, attemptId };
   },
 });

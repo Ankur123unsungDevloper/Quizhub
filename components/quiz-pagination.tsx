@@ -17,7 +17,7 @@ import {
 
 const TOTAL_PAGES = 1000;
 
-export const Pagenation = () => {
+export const QuizPagination = () => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
