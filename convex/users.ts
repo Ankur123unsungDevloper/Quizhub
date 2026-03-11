@@ -11,7 +11,6 @@ export const getUserByEmail = query({
       .query("users")
       .withIndex("by_email", (q) => q.eq("email", args.email))
       .first();
-
     return user;
   },
 });
@@ -21,14 +20,11 @@ export const getUserByEmail = query({
  */
 export const getUserByClerkId = query({
   args: { clerkId: v.string() },
-
   handler: async (ctx, args) => {
-
     const user = await ctx.db
       .query("users")
       .withIndex("by_clerk", q => q.eq("clerkId", args.clerkId))
       .first()
-
     return user
   }
 })
@@ -42,24 +38,25 @@ export const syncUser = mutation({
     name: v.string(),
     email: v.string(),
   },
-
   handler: async (ctx, args) => {
-
     const existing = await ctx.db
       .query("users")
       .withIndex("by_clerk", q => q.eq("clerkId", args.clerkId))
       .first()
-
-    if (existing) return existing
-
+    if (existing) {
+      const adminEmails = ["ankurdas1804@gmail.com"];
+      const correctRole = adminEmails.includes(args.email) ? "admin" : "student";
+      if (existing.role !== correctRole) {
+        await ctx.db.patch(existing._id, { role: correctRole });
+      }
+      return existing;
+    }
     const adminEmails = [
       "ankurdas1804@gmail.com"
     ]
-
     const role = adminEmails.includes(args.email)
       ? "admin"
       : "student"
-
     const userId = await ctx.db.insert("users", {
       clerkId: args.clerkId,
       name: args.name,
@@ -67,7 +64,6 @@ export const syncUser = mutation({
       role,
       createdAt: Date.now()
     })
-
     return await ctx.db.get(userId)
   }
 })

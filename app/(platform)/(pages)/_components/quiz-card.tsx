@@ -32,16 +32,6 @@ type CardData = {
   difficultyWeight?: number;
 };
 
-// ─── Category color mapping ───────────────────────────────────────────────────
-const categoryColors: Record<string, string> = {
-  school: "bg-blue-900/50 text-blue-300",
-  college: "bg-purple-900/50 text-purple-300",
-  competitive: "bg-orange-900/50 text-orange-300",
-  exam: "bg-green-900/50 text-green-300",
-  subject: "bg-yellow-900/50 text-yellow-300",
-  topic: "bg-pink-900/50 text-pink-300",
-};
-
 // ─── Fallback gradient based on card type ────────────────────────────────────
 const fallbackGradients: Record<string, string> = {
   exam: "from-orange-900 to-zinc-900",
@@ -51,12 +41,6 @@ const fallbackGradients: Record<string, string> = {
 
 export const QuizCard = ({ card }: { card: CardData }) => {
   const incrementViewCount = useMutation(api.cards.incrementViewCount);
-
-  const groupLabel =
-    card.parentName ??
-    card.examName ??
-    card.category ??
-    card.cardType;
 
   const handleClick = () => {
     incrementViewCount({
@@ -78,7 +62,8 @@ export const QuizCard = ({ card }: { card: CardData }) => {
             <Image
               src={card.imageUrl}
               alt={card.name}
-              fill
+              width={900}
+              height={900}
               className="object-cover"
             />
           ) : (
@@ -102,12 +87,9 @@ export const QuizCard = ({ card }: { card: CardData }) => {
         {/* Group label + view count */}
         <div className="flex items-center justify-between w-full">
           <span
-            className={`text-xs px-2 py-1 rounded-full capitalize ${
-              categoryColors[card.category ?? card.cardType] ??
-              "bg-zinc-800 text-zinc-400"
-            }`}
+            className={`text-xs px-2 py-1 rounded-full capitalize text-zinc-500 hover:text-white`}
           >
-            {groupLabel}
+            {card.name}
           </span>
           <div className="flex items-center gap-1 text-sm text-zinc-500">
             <FaEye className="size-3" />
@@ -115,13 +97,8 @@ export const QuizCard = ({ card }: { card: CardData }) => {
           </div>
         </div>
 
-        {/* Title */}
-        <h2 className="text-sm font-medium text-white mt-2 hover:text-[#FF8D28] transition">
-          {card.name}
-        </h2>
-
         {/* Description + dropdown */}
-        <div className="flex items-start gap-x-2 mt-1">
+        <div className="flex items-start gap-x-2 mt-4">
           <p className="flex-1 text-xs text-zinc-500 leading-relaxed line-clamp-2">
             {card.description ?? `Practice ${card.name} with AI-generated questions`}
           </p>

@@ -175,4 +175,21 @@ export default defineSchema({
 
     createdAt: v.number(),
   }).index("by_status", ["status"]),
+
+  // Add to your existing schema
+  agentLogs: defineTable({
+    runAt: v.number(),
+    status: v.union(
+      v.literal("running"),
+      v.literal("completed"),
+      v.literal("failed")
+    ),
+    summary: v.string(),
+    examsAdded: v.number(),
+    topicsAdded: v.number(),
+    questionsGenerated: v.number(),
+    imagesGenerated: v.number(),
+    issuesFixed: v.number(),
+    errorMessage: v.optional(v.string()),
+  }).index("by_status", ["status"]),
 });

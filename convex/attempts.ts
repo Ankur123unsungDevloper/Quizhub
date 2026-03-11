@@ -1,4 +1,4 @@
-import { mutation, action } from "./_generated/server";
+import { mutation, action, query } from "./_generated/server";
 import { v } from "convex/values";
 import { api } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
@@ -136,5 +136,163 @@ export const saveQuizResult = action({
     });
 
     return { success: true, attemptId };
+  },
+});
+
+// ─── Get quizzes taken ────────────────────────────────────────────────────────
+export const getQuizzesTaken = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const attempts = await ctx.db
+      .query("attempts")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .collect();
+    return attempts.length;
+  },
+});
+
+// ─── Get overall accuracy ─────────────────────────────────────────────────────
+export const getOverallAccuracy = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const attempts = await ctx.db
+      .query("attempts")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .collect();
+
+    if (attempts.length === 0) return 0;
+
+    const total = attempts.reduce((sum, a) => sum + a.accuracy, 0);
+    return Math.round(total / attempts.length);
+  },
+});
+
+// ─── Get current streak ───────────────────────────────────────────────────────
+export const getCurrentStreak = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const attempts = await ctx.db
+      .query("attempts")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .collect();
+
+    if (attempts.length === 0) return 0;
+
+    // Get unique days with activity
+    const days = new Set(
+      attempts.map((a) =>
+        new Date(a.completedAt).toISOString().split("T")[0]
+      )
+    );
+
+    // Count consecutive days from today
+    let streak = 0;
+    const today = new Date();
+
+    for (let i = 0; i < 365; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - i);
+      const dateStr = date.toISOString().split("T")[0];
+
+      if (days.has(dateStr)) {
+        streak++;
+      } else if (i > 0) {
+        // Allow today to be empty (streak not broken yet)
+        break;
+      }
+    }
+
+    return streak;
+  },
+});
+
+// ─── Get achievements ─────────────────────────────────────────────────────────
+export const getAchievements = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const attempts = await ctx.db
+      .query("attempts")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .collect();
+
+    const achievements: string[] = [];
+
+    if (attempts.length === 0) return achievements;
+
+    const totalAttempts = attempts.length;
+    const avgAccuracy =
+      attempts.reduce((sum, a) => sum + a.accuracy, 0) / totalAttempts;
+
+    // Streak
+    const days = new Set(
+      attempts.map((a) =>
+        new Date(a.completedAt).toISOString().split("T")[0]
+      )
+    );
+    let streak = 0;
+    const today = new Date();
+    for (let i = 0; i < 365; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - i);
+      if (days.has(date.toISOString().split("T")[0])) {
+        streak++;
+      } else if (i > 0) break;
+    }
+
+    // Award achievements
+    if (totalAttempts >= 1)  achievements.push("🎯 First Quiz");
+    if (totalAttempts >= 10) achievements.push("📚 10 Quizzes");
+    if (totalAttempts >= 50) achievements.push("🏆 50 Quizzes");
+    if (totalAttempts >= 100) achievements.push("💎 100 Quizzes");
+    if (avgAccuracy >= 70) achievements.push("✅ 70% Accuracy");
+    if (avgAccuracy >= 85) achievements.push("🎯 85% Accuracy");
+    if (avgAccuracy >= 95) achievements.push("🌟 95% Accuracy");
+    if (streak >= 3)  achievements.push("🔥 3 Day Streak");
+    if (streak >= 7)  achievements.push("⚡ 7 Day Streak");
+    if (streak >= 30) achievements.push("🚀 30 Day Streak");
+
+    return achievements;
+  },
+});
+
+// ─── Get recent activity ──────────────────────────────────────────────────────
+export const getRecentActivity = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const attempts = await ctx.db
+      .query("attempts")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .order("desc")
+      .take(10);
+
+    const result = await Promise.all(
+      attempts.map(async (attempt) => {
+        // ✅ Get answers for this attempt → get first question → get topic
+        const firstAnswer = await ctx.db
+          .query("attemptAnswers")
+          .withIndex("by_attempt", (q) => q.eq("attemptId", attempt._id))
+          .first();
+
+        const topic = firstAnswer
+          ? await ctx.db
+              .query("questions")
+              .filter((q) => q.eq(q.field("_id"), firstAnswer.questionId))
+              .first()
+              .then((question) =>
+                question ? ctx.db.get(question.topicId) : null
+              )
+          : null;
+
+        return {
+          topicName: topic?.name ?? "Quiz",
+          score: attempt.score,
+          total: 10,
+          accuracy: attempt.accuracy,
+          completedAt: attempt.completedAt,
+        };
+      })
+    );
+
+    return result;
   },
 });
