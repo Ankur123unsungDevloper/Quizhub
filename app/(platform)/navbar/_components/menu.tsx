@@ -291,43 +291,43 @@ export function Menu() {
                   <h3 className="text-2xl font-semibold text-white">Discover Video</h3>
                 </div>
                 <div className="flex flex-col w-full items-center justify-center">
-                  <Button asChild className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
+                  <Button className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
                     <HiLightBulb className="size-6" />
                     <Link href="/">
                       Recommended
                     </Link>
                   </Button>
-                  <Button asChild className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
+                  <Button className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
                     <GiNetworkBars className="size-6" />
                     <Link href="/">
                       Most Viewed
                     </Link>
                   </Button>
-                  <Button asChild className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
+                  <Button className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
                     <MdThumbUp className="size-6" />
                     <Link href="/">
                       Top Rated
                     </Link>
                   </Button>
-                  <Button asChild className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
+                  <Button className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
                     <MdPlaylistPlay className="size-6" />
                     <Link href="/">
                       Playlist
                     </Link>
                   </Button>
-                  <Button asChild className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
+                  <Button className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
                     <GrChannel className="size-6" />
                     <Link href="/">
                       Channels
                     </Link>
                   </Button>
-                  <Button asChild className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
+                  <Button className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
                     <LiaRandomSolid className="size-6" />
                     <Link href="/">
                       Randoms
                     </Link>
                   </Button>
-                  <Button asChild className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
+                  <Button className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
                     <HiLightBulb className="size-6" />
                     <Link href="/">
                       Newest

@@ -1,7 +1,7 @@
 "use node";
 
 import { internalAction, action } from "../_generated/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import Groq from "groq-sdk";
 import { internal, api } from "../_generated/api";
 import { Id } from "../_generated/dataModel";
 
@@ -53,21 +53,30 @@ export const runAutonomousAgent = internalAction({
       issuesFixed: 0,
     };
 
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-    // ─── Sleep helper ─────────────────────────────────────────────────────────────
-    const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+    // ✅ Groq only — no Gemini
+    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY! });
+
+    const sleep = (ms: number) =>
+      new Promise((resolve) => setTimeout(resolve, ms));
+
+    // ── Helper to call Groq ────────────────────────────────────────────────
+    const callGroq = async (prompt: string, maxTokens = 4000): Promise<string> => {
+      const result = await groq.chat.completions.create({
+        messages: [{ role: "user", content: prompt }],
+        model: "llama-3.3-70b-versatile",
+        temperature: 0.7,
+        max_tokens: maxTokens,
+      });
+      return result.choices[0]?.message?.content ?? "";
+    };
 
     try {
 
-      // ── Task 1: Add missing popular exams ──────────────────────────────────
+      // ── Task 1: Add missing popular exams ─────────────────────────────────
       const existingExams = await ctx.runQuery(
         internal.ai.agentHelpers.getExistingExamNames, {}
       );
-      const existingNames = existingExams.map((e) =>
-        e.name.toLowerCase()
-      );
-
+      const existingNames = existingExams.map((e) => e.name.toLowerCase());
       const missingExams = POPULAR_EXAMS.filter(
         (e) => !existingNames.includes(e.name.toLowerCase())
       );
@@ -92,8 +101,7 @@ Return ONLY valid JSON, no markdown, no backticks:
 }
 Each subject must have 8-12 realistic topics.
 `;
-          const result = await model.generateContent(structurePrompt);
-          const rawText = result.response.text();
+          const rawText = await callGroq(structurePrompt);
           const cleaned = rawText
             .replace(/```json/g, "")
             .replace(/```/g, "")
@@ -127,7 +135,7 @@ Each subject must have 8-12 realistic topics.
           }
 
           stats.examsAdded++;
-          await sleep(4000);
+          await sleep(2000);
 
         } catch (err) {
           console.error(`Failed to create ${missingExam.name}:`, err);
@@ -147,8 +155,7 @@ in exam "${subject.examName}".
 Return ONLY valid JSON array, no markdown:
 [{ "name": "topic name", "difficultyWeight": 5 }]
 `;
-          const result = await model.generateContent(topicsPrompt);
-          const rawText = result.response.text();
+          const rawText = await callGroq(topicsPrompt, 1000);
           const cleaned = rawText
             .replace(/```json/g, "")
             .replace(/```/g, "")
@@ -163,8 +170,10 @@ Return ONLY valid JSON array, no markdown:
               difficultyWeight: topic.difficultyWeight,
             });
             stats.topicsAdded++;
-            await sleep(4000);
           }
+
+          await sleep(2000);
+
         } catch (err) {
           console.error(`Failed to add topics to ${subject.subjectName}:`, err);
         }
@@ -175,7 +184,7 @@ Return ONLY valid JSON array, no markdown:
         internal.ai.agentHelpers.getTopicsWithNoQuestions, {}
       );
 
-      for (const topic of emptyTopics) {
+      for (const topic of emptyTopics.slice(0, 3)) {
         try {
           if (!topic.examId) continue;
 
@@ -195,18 +204,15 @@ Return ONLY valid JSON array, no markdown:
 
           stats.questionsGenerated += 10;
           console.log(`✅ Questions generated for ${topic.topicName}`);
-
-          // ✅ Wait 4 seconds between each Gemini call
-          await sleep(4000);
+          await sleep(2000);
 
         } catch (err) {
           console.error(`❌ Questions failed for ${topic.topicName}:`, err);
-          // Wait even longer after a failure before retrying next topic
-          await sleep(8000);
+          await sleep(3000);
         }
       }
 
-      // ── Task 4: Generate missing images ────────────────────────────────────
+      // ── Task 4: Generate missing images ───────────────────────────────────
       const missingImages = await ctx.runQuery(
         internal.ai.agentHelpers.getCardsWithNoImages, {}
       );
@@ -272,7 +278,7 @@ Return ONLY valid JSON array, no markdown:
   },
 });
 
-// ─── Public action to manually trigger agent ─────────────────────────────────
+// ─── Public action to manually trigger agent ──────────────────────────────────
 export const triggerAgentManually = action({
   args: {},
   handler: async (ctx): Promise<void> => {

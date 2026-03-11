@@ -2,8 +2,7 @@
 
 import { action } from "../_generated/server";
 import { v } from "convex/values";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import { generateQuestionsPrompt } from "./prompts";
+import Groq from "groq-sdk";
 import { api } from "../_generated/api";
 
 export const generateAndStoreQuestions = action({
@@ -25,41 +24,56 @@ export const generateAndStoreQuestions = action({
   handler: async (ctx, args) => {
     const startTime = Date.now();
 
-    // 1. Fetch existing questions for this topic
-    //    so AI never repeats them
+    // ── Fetch existing questions to avoid repeats ──────────────────────────
     const existingQuestions = await ctx.runQuery(
       api.questions.getQuestionTextsByTopic,
       { topicId: args.topicId }
     );
-
     const previousTexts = existingQuestions.map(
       (q: { questionText: string }) => q.questionText
     );
 
-    // 2. Build prompt
-    const prompt = generateQuestionsPrompt(
-      args.examName,
-      args.subjectName,
-      args.topicName,
-      args.difficulty,
-      args.count,
-      previousTexts
-    );
+    // ── Build prompt ───────────────────────────────────────────────────────
+    const prompt = `Generate ${args.count} multiple choice questions for:
+Exam: ${args.examName}
+Subject: ${args.subjectName}
+Topic: ${args.topicName}
+Difficulty: ${args.difficulty}
+${previousTexts.length > 0 ? `\nAvoid repeating these questions:\n${previousTexts.slice(0, 5).join("\n")}` : ""}
 
-    // 3. Call Gemini Flash
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-    const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash",
-    });
+Rules:
+- Each question must have exactly 4 options
+- Only one correct answer
+- Include a brief explanation
+- Return ONLY a valid JSON array, no markdown, no backticks
+
+Format:
+[
+  {
+    "questionText": "question here",
+    "options": ["A", "B", "C", "D"],
+    "correctOptionIndex": 0,
+    "difficulty": "${args.difficulty}",
+    "explanation": "why this answer is correct"
+  }
+]`;
+
+    // ── Call Groq ──────────────────────────────────────────────────────────
+    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY! });
 
     let rawText = "";
     let status: "success" | "failed" = "failed";
 
     try {
-      const result = await model.generateContent(prompt);
-      rawText = result.response.text();
+      const completion = await groq.chat.completions.create({
+        messages: [{ role: "user", content: prompt }],
+        model: "llama-3.3-70b-versatile",
+        temperature: 0.7,
+        max_tokens: 4000,
+      });
 
-      // 4. Clean response — remove any markdown Gemini might add
+      rawText = completion.choices[0]?.message?.content ?? "";
+
       const cleaned = rawText
         .replace(/```json/g, "")
         .replace(/```/g, "")
@@ -67,12 +81,11 @@ export const generateAndStoreQuestions = action({
 
       const parsed = JSON.parse(cleaned);
 
-      // 5. Validate parsed response is an array
       if (!Array.isArray(parsed)) {
         throw new Error("AI response is not a valid array");
       }
 
-      // 6. Store each question in Convex
+      // ── Store questions ────────────────────────────────────────────────
       for (const q of parsed) {
         await ctx.runMutation(api.questions.createQuestion, {
           examId: args.examId,
@@ -81,7 +94,7 @@ export const generateAndStoreQuestions = action({
           questionText: q.questionText,
           options: q.options,
           correctOptionIndex: q.correctOptionIndex,
-          difficulty: q.difficulty,
+          difficulty: q.difficulty ?? args.difficulty,
           explanation: q.explanation,
           aiGenerated: true,
         });
@@ -89,31 +102,24 @@ export const generateAndStoreQuestions = action({
 
       status = "success";
 
-      // 7. Log success
       await ctx.runMutation(api.questions.logAIGeneration, {
         tokensUsed: rawText.length,
         generationTimeMs: Date.now() - startTime,
         status,
       });
 
-      return {
-        success: true,
-        questionsGenerated: parsed.length,
-      };
+      return { success: true, questionsGenerated: parsed.length };
 
     } catch (error) {
       console.error("AI generation failed:", error);
 
-      // Log failure
       await ctx.runMutation(api.questions.logAIGeneration, {
         tokensUsed: rawText.length,
         generationTimeMs: Date.now() - startTime,
         status: "failed",
       });
 
-      throw new Error(
-        "Failed to generate questions. Please try again."
-      );
+      throw new Error("Failed to generate questions. Please try again.");
     }
   },
 });

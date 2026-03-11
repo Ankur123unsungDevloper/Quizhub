@@ -296,3 +296,104 @@ export const getRecentActivity = query({
     return result;
   },
 });
+
+// ─── Get subject wise accuracy ────────────────────────────────────────────────
+export const getSubjectAccuracy = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const topicStats = await ctx.db
+      .query("userTopicStats")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .collect();
+
+    if (topicStats.length === 0) return [];
+
+    const subjectMap = new Map<string, {
+      name: string;
+      totalAttempted: number;
+      totalCorrect: number;
+    }>();
+
+    for (const stat of topicStats) {
+      const topic = await ctx.db.get(stat.topicId);
+      if (!topic) continue;
+      const subject = await ctx.db.get(topic.subjectId);
+      if (!subject) continue;
+
+      const existing = subjectMap.get(subject._id) ?? {
+        name: subject.name,
+        totalAttempted: 0,
+        totalCorrect: 0,
+      };
+
+      subjectMap.set(subject._id, {
+        name: existing.name,
+        totalAttempted: existing.totalAttempted + stat.attempted,
+        totalCorrect: existing.totalCorrect + stat.correct,
+      });
+    }
+
+    return Array.from(subjectMap.values()).map((s) => ({
+      subject: s.name,
+      accuracy: Math.round((s.totalCorrect / s.totalAttempted) * 100),
+      attempted: s.totalAttempted,
+    }));
+  },
+});
+
+// ─── Get score trend (last 10 attempts) ──────────────────────────────────────
+export const getScoreTrend = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const attempts = await ctx.db
+      .query("attempts")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .order("desc")
+      .take(10);
+
+    return attempts.reverse().map((a, i) => ({
+      attempt: i + 1,
+      accuracy: a.accuracy,
+      score: a.score,
+      date: new Date(a.completedAt).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+      }),
+    }));
+  },
+});
+
+// ─── Get weak vs strong topics ────────────────────────────────────────────────
+export const getWeakStrongTopics = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const topicStats = await ctx.db
+      .query("userTopicStats")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .collect();
+
+    const result = await Promise.all(
+      topicStats.map(async (stat) => {
+        const topic = await ctx.db.get(stat.topicId);
+        const subject = topic
+          ? await ctx.db.get(topic.subjectId)
+          : null;
+        return {
+          topicName: topic?.name ?? "Unknown",
+          subjectName: subject?.name ?? "Unknown",
+          accuracy: stat.accuracyPercentage,
+          attempted: stat.attempted,
+        };
+      })
+    );
+
+    const sorted = result
+      .filter((t) => t.attempted >= 1)
+      .sort((a, b) => b.accuracy - a.accuracy);
+
+    return {
+      strong: sorted.slice(0, 5),
+      weak: sorted.slice(-5).reverse(),
+    };
+  },
+});
