@@ -39,6 +39,12 @@ const fallbackGradients: Record<string, string> = {
   topic: "from-purple-900 to-zinc-900",
 };
 
+const fallbackIcons: Record<string, string> = {
+  exam:    "📋",
+  subject: "📚",
+  topic:   "📝",
+};
+
 export const QuizCard = ({ card }: { card: CardData }) => {
   const incrementViewCount = useMutation(api.cards.incrementViewCount);
 
@@ -51,33 +57,41 @@ export const QuizCard = ({ card }: { card: CardData }) => {
 
   return (
     <Link
-      href={`/cards/${card.cardType}/${card._id}`}
-      onClick={handleClick}
+      href={card.cardType === "topic" ? `/quiz/${card._id}` : `/cards/${card.cardType}/${card._id}`}
+      onMouseDown={handleClick}
       className="block hover:bg-zinc-900 p-2 rounded-xl transition duration-200"
     >
       {/* Image */}
-      <Card className="bg-zinc-900 border-zinc-800 hover:border-[#FF8D28] overflow-hidden transition duration-200">
-        <CardContent className="p-0 relative h-48">
-          {card.imageUrl ? (
-            <Image
-              src={card.imageUrl}
-              alt={card.name}
-              width={900}
-              height={900}
-              className="object-cover"
-            />
-          ) : (
-            // Fallback gradient when no image yet
-            <div
-              className={`w-full h-full bg-linear-to-br ${
-                fallbackGradients[card.cardType]
-              } flex items-center justify-center`}
-            >
-              <p className="text-white/20 text-4xl font-bold uppercase">
-                {card.name.charAt(0)}
-              </p>
-            </div>
-          )}
+      <Card className="bg-zinc-900 border-zinc-800 hover:border-[#FF8D28] -py-6 overflow-hidden transition duration-200">
+        <CardContent className="p-0">
+          <div className="relative w-full h-60 overflow-hidden">
+            {card.imageUrl ? (
+              <>
+                <Image
+                  src={card.imageUrl}
+                  alt={card.name}
+                  fill
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  onError={(e) => {
+                    // Hide broken image, show fallback
+                    (e.target as HTMLImageElement).style.display = "none";
+                  }}
+                />
+                {/* Gradient overlay for better text readability */}
+                <div className="absolute inset-0 bg-linear-to-t from-zinc-900/60 to-transparent" />
+              </>
+            ) : (
+              // Fallback when no image
+              <div
+                className={`w-full h-full bg-linear-to-br ${fallbackGradients[card.cardType]} flex flex-col items-center justify-center gap-2`}
+              >
+                <span className="text-5xl">{fallbackIcons[card.cardType]}</span>
+                <p className="text-white/30 text-sm font-medium uppercase tracking-widest">
+                  {card.cardType}
+                </p>
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
 

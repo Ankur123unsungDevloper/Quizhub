@@ -572,3 +572,49 @@ export const debugCounts = query({
     };
   },
 });
+
+// ─── Add these queries to convex/admin.ts ────────────────────────────────────
+// These are PUBLIC read queries (no admin check needed) for the quizzes page
+
+// Get all exams — for exam tabs
+export const getAllExams = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query("exams").order("asc").collect();
+  },
+});
+
+// Get subjects by exam — for subject filter pills
+export const getSubjectsByExam = query({
+  args: { examId: v.id("exams") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("subjects")
+      .withIndex("by_exam", (q) => q.eq("examId", args.examId))
+      .collect();
+  },
+});
+
+// Get all topics for an exam (via subjects join) — for topic cards grid
+export const getTopicsByExam = query({
+  args: { examId: v.id("exams") },
+  handler: async (ctx, args) => {
+    const subjects = await ctx.db
+      .query("subjects")
+      .withIndex("by_exam", (q) => q.eq("examId", args.examId))
+      .collect();
+
+    const subjectIds = new Set(subjects.map((s) => s._id));
+
+    const allTopics = await Promise.all(
+      subjects.map((s) =>
+        ctx.db
+          .query("topics")
+          .withIndex("by_subject", (q) => q.eq("subjectId", s._id))
+          .collect()
+      )
+    );
+
+    return allTopics.flat();
+  },
+});

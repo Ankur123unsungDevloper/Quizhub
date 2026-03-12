@@ -14,10 +14,11 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 
+interface QuizPaginationProps {
+  totalPages?: number;
+}
 
-const TOTAL_PAGES = 1000;
-
-export const QuizPagination = () => {
+export const QuizPagination = ({ totalPages = 1000 }: QuizPaginationProps) => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -46,7 +47,7 @@ export const QuizPagination = () => {
   const startPage = currentBlock * PAGE_GROUP_SIZE + 1;
   const endPage = Math.min(
     startPage + PAGE_GROUP_SIZE - 1,
-    TOTAL_PAGES
+    totalPages
   );
 
   const visiblePages =
@@ -55,26 +56,26 @@ export const QuizPagination = () => {
       : Array.from(
           { length: endPage - startPage + 1 },
           (_, i) => startPage + i
-      );
-  
+        );
+
   return (
     <Pagination>
-        <PaginationContent className="flex items-center justify-center gap-6 text-[#FF8D28] text-xl mt-40 mb-10">
+      <PaginationContent className="flex items-center justify-center gap-6 text-[#FF8D28] text-xl mt-40 mb-10">
 
-          {/* Previous */}
-          <PaginationItem>
-            <PaginationPrevious
-              href={`/quizzes?page=${Math.max(1, currentPage - 1)}`}
-              className={
-                isHome || currentPage === 1
-                  ? "pointer-events-none opacity-50"
-                  : ""
-              }
-            />
-          </PaginationItem>
+        {/* Previous */}
+        <PaginationItem>
+          <PaginationPrevious
+            href={`/quizzes?page=${Math.max(1, currentPage - 1)}`}
+            className={
+              isHome || currentPage === 1
+                ? "pointer-events-none opacity-50"
+                : ""
+            }
+          />
+        </PaginationItem>
 
-          {/* 1 2 3 4 5 */}
-          {visiblePages.map((page) => (
+        {/* 1 2 3 4 5 */}
+        {visiblePages.map((page) => (
           <PaginationItem key={page}>
             <PaginationLink
               href={`/quizzes?page=${page}`}
@@ -86,21 +87,21 @@ export const QuizPagination = () => {
           </PaginationItem>
         ))}
 
-          {/* Next */}
-          <PaginationItem>
-            <PaginationNext
-              href={`/quizzes?page=${
-                isHome ? 1 : Math.min(TOTAL_PAGES, currentPage + 1)
-              }`}
-              className={
-                !isHome && currentPage >= TOTAL_PAGES
-                  ? "pointer-events-none opacity-50"
-                  : ""
-              }
-            />
-          </PaginationItem>
+        {/* Next */}
+        <PaginationItem>
+          <PaginationNext
+            href={`/quizzes?page=${
+              isHome ? 1 : Math.min(totalPages, currentPage + 1)
+            }`}
+            className={
+              !isHome && currentPage >= totalPages
+                ? "pointer-events-none opacity-50"
+                : ""
+            }
+          />
+        </PaginationItem>
 
-        </PaginationContent>
-      </Pagination>
-  )
-}
+      </PaginationContent>
+    </Pagination>
+  );
+};

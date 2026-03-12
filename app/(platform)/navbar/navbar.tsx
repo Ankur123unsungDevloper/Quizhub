@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useScrollTop } from "@/hooks/use-scroll-top";
@@ -9,9 +10,20 @@ import SearchBar from "./_components/searchbar";
 import ActionButton from "./_components/action-button";
 import Sidebar from "./_components/sidebar/sidebar";
 import { Menu } from "./_components/menu";
+import { useEffect, useState } from "react";
 
 const Navbar = () => {
   const scrolled = useScrollTop();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  
+  if (!isMounted) {
+    return null;
+  }
 
   return (
     <div

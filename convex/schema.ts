@@ -123,7 +123,7 @@ export default defineSchema({
   // To track user attempts and performance on tests for analytics and personalized feedback
   attempts: defineTable({
     userId: v.id("users"),
-    testId: v.id("tests"),
+    examId: v.id("exams"),
 
     score: v.number(),
     accuracy: v.number(),
@@ -133,7 +133,7 @@ export default defineSchema({
     completedAt: v.number(),
   })
     .index("by_user", ["userId"])
-    .index("by_test", ["testId"]),
+    .index("by_exam", ["examId"]),
   
   // To store detailed answer data for analytics and personalized feedback
   attemptAnswers: defineTable({

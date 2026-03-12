@@ -7,7 +7,7 @@ import { Id } from "./_generated/dataModel";
 export const saveAttempt = mutation({
   args: {
     userId: v.id("users"),
-    testId: v.id("tests"),
+    examId: v.id("exams"),       // ✅ was testId: v.id("tests")
     score: v.number(),
     accuracy: v.number(),
     timeTakenSeconds: v.number(),
@@ -65,7 +65,6 @@ export const updateTopicStats = mutation({
       const newAttempted = existing.attempted + args.attempted;
       const newCorrect = existing.correct + args.correct;
       const newAccuracy = Math.round((newCorrect / newAttempted) * 100);
-
       await ctx.db.patch(existing._id, {
         attempted: newAttempted,
         correct: newCorrect,
@@ -89,7 +88,7 @@ export const updateTopicStats = mutation({
 export const saveQuizResult = action({
   args: {
     userId: v.id("users"),
-    testId: v.id("tests"),
+    examId: v.id("exams"),       // ✅ was testId: v.id("tests")
     topicId: v.id("topics"),
     score: v.number(),
     accuracy: v.number(),
@@ -105,13 +104,13 @@ export const saveQuizResult = action({
       })
     ),
   },
-  handler: async (ctx, args): Promise<{ success: boolean; attemptId: Id<"attempts"> }> => { // ✅ return type added
+  handler: async (ctx, args): Promise<{ success: boolean; attemptId: Id<"attempts"> }> => {
     // 1. Save attempt
-    const attemptId: Id<"attempts"> = await ctx.runMutation( // ✅ type added
+    const attemptId: Id<"attempts"> = await ctx.runMutation(
       api.attempts.saveAttempt,
       {
         userId: args.userId,
-        testId: args.testId,
+        examId: args.examId,     // ✅ fixed
         score: args.score,
         accuracy: args.accuracy,
         timeTakenSeconds: args.timeTakenSeconds,
@@ -159,9 +158,7 @@ export const getOverallAccuracy = query({
       .query("attempts")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .collect();
-
     if (attempts.length === 0) return 0;
-
     const total = attempts.reduce((sum, a) => sum + a.accuracy, 0);
     return Math.round(total / attempts.length);
   },
@@ -175,33 +172,26 @@ export const getCurrentStreak = query({
       .query("attempts")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .collect();
-
     if (attempts.length === 0) return 0;
 
-    // Get unique days with activity
     const days = new Set(
       attempts.map((a) =>
         new Date(a.completedAt).toISOString().split("T")[0]
       )
     );
 
-    // Count consecutive days from today
     let streak = 0;
     const today = new Date();
-
     for (let i = 0; i < 365; i++) {
       const date = new Date(today);
       date.setDate(today.getDate() - i);
       const dateStr = date.toISOString().split("T")[0];
-
       if (days.has(dateStr)) {
         streak++;
       } else if (i > 0) {
-        // Allow today to be empty (streak not broken yet)
         break;
       }
     }
-
     return streak;
   },
 });
@@ -216,14 +206,12 @@ export const getAchievements = query({
       .collect();
 
     const achievements: string[] = [];
-
     if (attempts.length === 0) return achievements;
 
     const totalAttempts = attempts.length;
     const avgAccuracy =
       attempts.reduce((sum, a) => sum + a.accuracy, 0) / totalAttempts;
 
-    // Streak
     const days = new Set(
       attempts.map((a) =>
         new Date(a.completedAt).toISOString().split("T")[0]
@@ -239,17 +227,16 @@ export const getAchievements = query({
       } else if (i > 0) break;
     }
 
-    // Award achievements
-    if (totalAttempts >= 1)  achievements.push("🎯 First Quiz");
-    if (totalAttempts >= 10) achievements.push("📚 10 Quizzes");
-    if (totalAttempts >= 50) achievements.push("🏆 50 Quizzes");
+    if (totalAttempts >= 1)   achievements.push("🎯 First Quiz");
+    if (totalAttempts >= 10)  achievements.push("📚 10 Quizzes");
+    if (totalAttempts >= 50)  achievements.push("🏆 50 Quizzes");
     if (totalAttempts >= 100) achievements.push("💎 100 Quizzes");
-    if (avgAccuracy >= 70) achievements.push("✅ 70% Accuracy");
-    if (avgAccuracy >= 85) achievements.push("🎯 85% Accuracy");
-    if (avgAccuracy >= 95) achievements.push("🌟 95% Accuracy");
-    if (streak >= 3)  achievements.push("🔥 3 Day Streak");
-    if (streak >= 7)  achievements.push("⚡ 7 Day Streak");
-    if (streak >= 30) achievements.push("🚀 30 Day Streak");
+    if (avgAccuracy >= 70)    achievements.push("✅ 70% Accuracy");
+    if (avgAccuracy >= 85)    achievements.push("🎯 85% Accuracy");
+    if (avgAccuracy >= 95)    achievements.push("🌟 95% Accuracy");
+    if (streak >= 3)          achievements.push("🔥 3 Day Streak");
+    if (streak >= 7)          achievements.push("⚡ 7 Day Streak");
+    if (streak >= 30)         achievements.push("🚀 30 Day Streak");
 
     return achievements;
   },
@@ -267,7 +254,6 @@ export const getRecentActivity = query({
 
     const result = await Promise.all(
       attempts.map(async (attempt) => {
-        // ✅ Get answers for this attempt → get first question → get topic
         const firstAnswer = await ctx.db
           .query("attemptAnswers")
           .withIndex("by_attempt", (q) => q.eq("attemptId", attempt._id))
@@ -375,9 +361,7 @@ export const getWeakStrongTopics = query({
     const result = await Promise.all(
       topicStats.map(async (stat) => {
         const topic = await ctx.db.get(stat.topicId);
-        const subject = topic
-          ? await ctx.db.get(topic.subjectId)
-          : null;
+        const subject = topic ? await ctx.db.get(topic.subjectId) : null;
         return {
           topicName: topic?.name ?? "Unknown",
           subjectName: subject?.name ?? "Unknown",
