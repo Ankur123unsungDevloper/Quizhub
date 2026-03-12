@@ -2,14 +2,13 @@
 
 import { Separator } from "@/components/ui/separator";
 import {
-  Combobox,
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxList,
-} from "@/components/ui/combobox";
-import { InputGroupAddon } from "@/components/ui/input-group";
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import { GlobeIcon } from "lucide-react";
 
@@ -21,9 +20,15 @@ import Resources from "./_components/resources";
 import Social from "./_components/social";
 import Update from "./_components/update";
 
+const LANGUAGES = [
+  { value: "en", label: "English" },
+  { value: "hi", label: "Hindi" },
+  { value: "bn", label: "Bengali" },
+  { value: "ta", label: "Tamil" },
+  { value: "te", label: "Telugu" },
+];
+
 const Footer = () => {
-  const frameworks = ["Next.js", "SvelteKit", "Nuxt.js", "Remix", "Astro"]
-  
   return (
     <div className="flex items-center justify-center w-full h-full bg-zinc-800 p-10">
       <div className="flex flex-col items-center justify-center h-full">
@@ -40,23 +45,24 @@ const Footer = () => {
             <Update />
           </div>
           <div className="flex justify-end items-end w-full">
-            <Combobox items={frameworks}>
-              <ComboboxInput placeholder="Language">
-                <InputGroupAddon>
-                  <GlobeIcon />
-                </InputGroupAddon>
-              </ComboboxInput>
-              <ComboboxContent>
-                <ComboboxEmpty>No items found.</ComboboxEmpty>
-                <ComboboxList>
-                  {(item) => (
-                    <ComboboxItem key={item} value={item}>
-                      {item}
-                    </ComboboxItem>
-                  )}
-                </ComboboxList>
-              </ComboboxContent>
-            </Combobox>
+            {/* ✅ Fixed: GlobeIcon + placeholder inside trigger, not SelectValue */}
+            <Select defaultValue="en">
+              <SelectTrigger className="w-45">
+                <div className="flex items-center gap-2">
+                  <GlobeIcon className="size-4 text-zinc-400" />
+                  <SelectValue />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {LANGUAGES.map((lang) => (
+                    <SelectItem key={lang.value} value={lang.value}>
+                      {lang.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
         </div>
         <Separator className="my-10 border-zinc-700 w-full" />
