@@ -34,8 +34,10 @@ export function Menu() {
   const isHome = pathname === "/";
   const isQuizzes = isActiveRoute("/quizzes");
   const isCategories = isActiveRoute("/categories");
-  const isAIBook = isActiveRoute("/aibook")
-  
+  const isAIBook = isActiveRoute("/aibook");
+  const isVideos = isActiveRoute("/classes-video");
+  const isCommunity = isActiveRoute("/community");
+
   const activeStyle = "text-[#FF8D28] border-b-4 border-[#FF8D28]"
 
   const filters = [
@@ -282,7 +284,19 @@ export function Menu() {
           </NavigationMenuContent>
         </NavigationMenuItem>
         <NavigationMenuItem className="hidden md:flex">
-          <NavigationMenuTrigger className="text-sm w-53 h-10 hover:text-[#FF8D28] bg-zinc-800/50">Classes Videos</NavigationMenuTrigger>
+          <NavigationMenuTrigger
+            className={`
+              text-sm w-53 h-10 hover:text-[#FF8D28] bg-zinc-800/50
+              ${isVideos ? activeStyle : ""}
+            `}
+          >
+            <Link
+              href="/classes-video"
+              className="text-sm font-medium"
+            >
+              Classes Videos
+            </Link>
+          </NavigationMenuTrigger>
           <NavigationMenuContent className="min-w-7xl flex justify-center">
             <div className="flex flex-row w-full">
 
@@ -434,7 +448,19 @@ export function Menu() {
           </NavigationMenuLink>
         </NavigationMenuItem>
         <NavigationMenuItem className="hidden md:flex">
-          <NavigationMenuTrigger className="text-sm w-53 h-10 hover:text-[#FF8D28] bg-zinc-800/50">Community</NavigationMenuTrigger>
+          <NavigationMenuTrigger
+            className={`
+              text-sm w-53 h-10 hover:text-[#FF8D28] bg-zinc-800/50
+              ${isCommunity ? activeStyle : ""}
+            `}
+          >
+            <Link
+              href="/community"
+              className="text-sm font-medium"
+            >
+              Community
+            </Link>
+          </NavigationMenuTrigger>
           <NavigationMenuContent className="min-w-7xl flex justify-center">
             <div className="flex flex-row w-full">
 

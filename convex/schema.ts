@@ -62,11 +62,12 @@ export default defineSchema({
 
   // Update topics table — add imageUrl
   topics: defineTable({
-    subjectId: v.id("subjects"),
     name: v.string(),
+    description: v.optional(v.string()),  // ← add this line
+    subjectId: v.id("subjects"),
+    imageUrl: v.optional(v.string()),
+    viewCount: v.optional(v.number()),
     difficultyWeight: v.number(),
-    imageUrl: v.optional(v.string()), // ✅ new
-    viewCount: v.optional(v.number()), // ✅ new
   }).index("by_subject", ["subjectId"]),
 
   // To store questions for exams, allowing for structured question management and retrieval based on various criteria

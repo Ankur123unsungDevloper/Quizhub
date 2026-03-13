@@ -618,3 +618,36 @@ export const getTopicsByExam = query({
     return allTopics.flat();
   },
 });
+
+// ── Add these to the bottom of convex/admin.ts ───────────────────────────────
+// getAllExams and getTopicsByExam already exist — only add these two new ones:
+
+// Returns a topic + its parent examId (needed by exam page for saveExamResult)
+export const getTopicWithExam = query({
+  args: { topicId: v.id("topics") },
+  handler: async (ctx, args) => {
+    const topic = await ctx.db.get(args.topicId);
+    if (!topic) return null;
+    const subject = await ctx.db.get(topic.subjectId);
+    if (!subject) return null;
+    return {
+      _id: topic._id,
+      name: topic.name,
+      description: topic.description,
+      imageUrl: topic.imageUrl,
+      subjectId: topic.subjectId,
+      examId: subject.examId,   // ← this is what the exam page needs
+    };
+  },
+});
+
+// Returns all questions for a topic (exam page uses this)
+export const getQuestionsByTopic = query({
+  args: { topicId: v.id("topics") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("questions")
+      .withIndex("by_topic", (q) => q.eq("topicId", args.topicId))
+      .collect();
+  },
+});

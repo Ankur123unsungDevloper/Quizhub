@@ -138,6 +138,69 @@ export const saveQuizResult = action({
   },
 });
 
+// ─── Exam result action (exam mode: +4/-1, uses tests table logic) ────────────
+export const saveExamResult = action({
+  args: {
+    userId: v.id("users"),
+    examId: v.id("exams"),
+    topicId: v.id("topics"),
+    score: v.number(),
+    totalQuestions: v.number(),
+    correctAnswers: v.number(),
+    wrongAnswers: v.number(),
+    timeTaken: v.number(),       // seconds elapsed (not total)
+    answers: v.array(
+      v.object({
+        questionId: v.id("questions"),
+        selectedAnswer: v.number(),  // -1 = unattempted
+        isCorrect: v.boolean(),
+      })
+    ),
+  },
+  handler: async (ctx, args): Promise<{ success: boolean; attemptId: Id<"attempts"> }> => {
+    const accuracy = args.totalQuestions > 0
+      ? Math.round((args.correctAnswers / args.totalQuestions) * 100)
+      : 0;
+
+    const now = Date.now();
+
+    // 1. Save attempt (reuses same attempts table — exam score can be negative)
+    const attemptId: Id<"attempts"> = await ctx.runMutation(
+      api.attempts.saveAttempt,
+      {
+        userId: args.userId,
+        examId: args.examId,
+        score: args.score,
+        accuracy,
+        timeTakenSeconds: args.timeTaken,
+        startedAt: now - args.timeTaken * 1000,
+        completedAt: now,
+      }
+    );
+
+    // 2. Save individual answers (map to attemptAnswers schema)
+    await ctx.runMutation(api.attempts.saveAttemptAnswers, {
+      attemptId,
+      answers: args.answers.map((a) => ({
+        questionId: a.questionId,
+        selectedOptionIndex: a.selectedAnswer,
+        isCorrect: a.isCorrect,
+        timeSpentSeconds: 0,   // exam mode doesn't track per-question time
+      })),
+    });
+
+    // 3. Update topic stats
+    await ctx.runMutation(api.attempts.updateTopicStats, {
+      userId: args.userId,
+      topicId: args.topicId,
+      attempted: args.totalQuestions,
+      correct: args.correctAnswers,
+    });
+
+    return { success: true, attemptId };
+  },
+});
+
 // ─── Get quizzes taken ────────────────────────────────────────────────────────
 export const getQuizzesTaken = query({
   args: { userId: v.id("users") },

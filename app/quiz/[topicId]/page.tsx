@@ -596,7 +596,7 @@ const QuizPage = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 -mt-20 pb-20 relative z-10">
+      <div className="w-full mx-auto px-10 -mt-20 pb-20 relative z-10">
         <div className="flex flex-col lg:flex-row gap-6 items-start">
 
           {/* Left */}

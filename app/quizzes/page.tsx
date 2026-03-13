@@ -31,9 +31,37 @@ import { MdPlaylistRemove } from "react-icons/md";
 
 const CARDS_PER_PAGE = 12;
 
-// ─── Seeded Fisher-Yates shuffle ──────────────────────────────────────────────
-// Same seed → same order every time (stable while navigating pages).
-// New seed on each full page refresh → cards reposition.
+const fallbackGradients: Record<string, string> = {
+  quiz: "from-orange-900/40 to-zinc-800",
+  exam: "from-indigo-900/40 to-zinc-800",
+};
+
+const fallbackIcons: Record<string, string> = {
+  quiz: "📝",
+  exam: "🎯",
+};
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+type RawTopic = {
+  _id: Id<"topics">;
+  name: string;
+  description?: string;
+  imageUrl?: string;
+  viewCount?: number;
+};
+
+type CardEntry = {
+  id: string;             // unique key: topicId + "-quiz" | "-exam"
+  topicId: Id<"topics">;
+  name: string;
+  description: string;    // mode-specific description
+  imageUrl?: string;
+  viewCount?: number;
+  mode: "quiz" | "exam";
+  href: string;
+};
+
+// ─── Seeded Fisher-Yates shuffle ─────────────────────────────────────────────
 function seededShuffle<T>(array: T[], seed: number): T[] {
   const arr = [...array];
   let s = seed;
@@ -45,14 +73,23 @@ function seededShuffle<T>(array: T[], seed: number): T[] {
   return arr;
 }
 
+// Build mode-aware description
+function quizDescription(name: string, original?: string): string {
+  if (original) return `Quick quiz: ${original}`;
+  return `Solve quick MCQs on ${name} to build your understanding and test your basics.`;
+}
+
+function examDescription(name: string, original?: string): string {
+  if (original) return `Exam: ${original}`;
+  return `Test your ${name} knowledge under real exam conditions — timed, scored with +4/−1 marking.`;
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 const Quizzespage = () => {
   const { user } = useUser();
   const searchParams = useSearchParams();
   const currentPage = Number(searchParams.get("page") ?? "1");
 
-  // Seed is captured once per mount — stable across page navigation,
-  // but brand new on every browser refresh.
   const shuffleSeed = useMemo(() => Date.now(), []);
 
   // ── Convex queries ──
@@ -60,20 +97,17 @@ const Quizzespage = () => {
   const profile = useQuery(api.userProfiles.getProfileByUserId, dbUser ? { userId: dbUser._id } : "skip");
   const allExams = useQuery(api.admin.getAllExams);
 
-  // Match student's target exam from their profile
   const targetExam = allExams?.find((e: { _id: Id<"exams">; name: string }) =>
     profile?.targetExam
       ? e.name.toLowerCase().includes(profile.targetExam.toLowerCase())
       : false
   );
 
-  // Fetch all topics for matched exam
   const examTopics = useQuery(
     api.admin.getTopicsByExam,
     targetExam ? { examId: targetExam._id } : "skip"
   );
 
-  // Fallback: show first exam's topics if student hasn't set a target exam yet
   const fallbackTopics = useQuery(
     api.admin.getTopicsByExam,
     !profile?.targetExam && allExams && allExams.length > 0
@@ -81,25 +115,41 @@ const Quizzespage = () => {
       : "skip"
   );
 
-  const allTopics: {
-    _id: Id<"topics">;
-    name: string;
-    description?: string;
-    imageUrl?: string;
-    viewCount?: number;
-  }[] = (examTopics ?? fallbackTopics ?? []) as never;
+  const allTopics: RawTopic[] = (examTopics ?? fallbackTopics ?? []) as never;
 
-  // ── Shuffle once on mount, stable while navigating pages ──
-  const shuffled = useMemo(
-    () => allTopics.length > 0 ? seededShuffle(allTopics, shuffleSeed) : [],
+  // ── Build two cards per topic, then shuffle the full list ──
+  const allCards: CardEntry[] = useMemo(() => {
+    if (allTopics.length === 0) return [];
+    const entries: CardEntry[] = [];
+    for (const t of allTopics) {
+      entries.push({
+        id: `${t._id}-quiz`,
+        topicId: t._id,
+        name: t.name,
+        description: quizDescription(t.name, t.description),
+        imageUrl: t.imageUrl,
+        viewCount: t.viewCount,
+        mode: "quiz",
+        href: `/quiz/${t._id}`,
+      });
+      entries.push({
+        id: `${t._id}-exam`,
+        topicId: t._id,
+        name: t.name,
+        description: examDescription(t.name, t.description),
+        imageUrl: t.imageUrl,
+        viewCount: t.viewCount,
+        mode: "exam",
+        href: `/exam/${t._id}`,
+      });
+    }
+    return seededShuffle(entries, shuffleSeed);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [allTopics.length, shuffleSeed]   // re-shuffle only when topic list size changes
-  );
+  }, [allTopics.length, shuffleSeed]);
 
-  // ── Slice for current page — zero repeats guaranteed ──
-  const totalPages = Math.max(1, Math.ceil(shuffled.length / CARDS_PER_PAGE));
+  const totalPages = Math.max(1, Math.ceil(allCards.length / CARDS_PER_PAGE));
   const safePage = Math.min(Math.max(1, currentPage), totalPages);
-  const pageCards = shuffled.slice(
+  const pageCards = allCards.slice(
     (safePage - 1) * CARDS_PER_PAGE,
     safePage * CARDS_PER_PAGE
   );
@@ -112,14 +162,14 @@ const Quizzespage = () => {
       <div className="w-full h-full flex flex-col items-center justify-center relative top-30">
         <Topbar />
 
-        {/* Subtle context label */}
+        {/* Context label */}
         {targetExam && !isLoading && (
           <p className="text-zinc-500 text-sm mb-4 w-full">
             Showing topics for{" "}
             <span className="text-[#FF8D28] font-medium">{targetExam.name}</span>
             {" "}— your target exam
             <span className="text-zinc-600 ml-2">
-              ({shuffled.length} topics · page {safePage} of {totalPages})
+              ({allTopics.length} topics · {allCards.length} cards · page {safePage} of {totalPages})
             </span>
           </p>
         )}
@@ -141,61 +191,80 @@ const Quizzespage = () => {
         {!isLoading && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
             {pageCards.map((card) => (
-              <div key={card._id} className="hover:bg-zinc-900 p-2 rounded-xl">
-                <Link href={`/quiz/${card._id}`}>
-                  <Card className="bg-zinc-900 border-zinc-800 hover:border-[#FF8D28] h-70 transition duration-200">
-                    <CardContent className="space-y-3">
+              <Link
+                key={card.id}
+                href={card.href}
+                className="block hover:bg-zinc-900 p-2 rounded-xl transition duration-200"
+              >
+                {/* Image */}
+                <Card className={`bg-zinc-900 border-zinc-800 -py-6 overflow-hidden transition duration-200 ${
+                  card.mode === "quiz" ? "hover:border-[#FF8D28]" : "hover:border-[#FF8D28]"
+                }`}>
+                  <CardContent className="p-0">
+                    <div className="relative w-full h-60 overflow-hidden">
                       {card.imageUrl ? (
-                        <div className="relative w-full h-48 overflow-hidden rounded-lg">
+                        <>
                           <Image
                             src={card.imageUrl}
                             alt={card.name}
                             fill
-                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                            className="object-cover"
+                            className="object-cover transition-transform duration-300 group-hover:scale-105"
                             onError={(e) => {
                               (e.target as HTMLImageElement).style.display = "none";
                             }}
                           />
-                        </div>
+                          <div className="absolute inset-0 bg-linear-to-t from-zinc-900/60 to-transparent" />
+                        </>
                       ) : (
-                        <div className="w-full h-48 rounded-lg bg-linear-to-br from-orange-900/30 to-zinc-800 flex items-center justify-center">
-                          <span className="text-zinc-600 text-4xl">📚</span>
+                        <div className={`w-full h-full bg-linear-to-br ${fallbackGradients[card.mode]} flex flex-col items-center justify-center gap-2`}>
+                          <span className="text-5xl">{fallbackIcons[card.mode]}</span>
+                          <p className="text-white/30 text-sm font-medium uppercase tracking-widest">
+                            {card.mode}
+                          </p>
                         </div>
                       )}
-                    </CardContent>
-                  </Card>
-                </Link>
+                    </div>
+                  </CardContent>
+                </Card>
 
-                <div className="flex flex-col items-center justify-center py-2">
-                  <div className="flex flex-row items-center justify-between space-x-85">
-                    <Link href={`/quiz/${card._id}`} className="w-full">
-                      <h2 className="text-sm text-muted-foreground hover:text-white">
-                        {card.name}
-                      </h2>
-                    </Link>
-                    <div className="flex flex-row items-center text-sm text-muted-foreground hover:text-white">
-                      <FaEye />&nbsp;{card.viewCount ?? 0}
+                {/* Card Info */}
+                <div className="flex flex-col py-2 px-1">
+                  {/* Name + view count */}
+                  <div className="flex items-center justify-between w-full">
+                    <span className="text-xs px-2 py-1 rounded-full capitalize text-zinc-500 hover:text-white">
+                      {card.name}
+                    </span>
+                    <div className="flex items-center gap-1 text-sm text-zinc-500">
+                      <FaEye className="size-3" />
+                      <span>{card.viewCount ?? 0}</span>
                     </div>
                   </div>
 
-                  <div className="flex items-start w-full gap-x-4 mt-2">
-                    <div className="flex-1 text-sm text-muted-foreground leading-relaxed line-clamp-2">
-                      {card.description ?? `Practice ${card.name} with AI-generated MCQs.`}
-                    </div>
+                  {/* Description + dropdown */}
+                  <div className="flex items-start gap-x-2 mt-4">
+                    <p className="flex-1 text-xs text-zinc-500 leading-relaxed line-clamp-2">
+                      {card.description}
+                    </p>
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="shrink-0 hover:bg-zinc-700">
-                          <BsThreeDotsVertical className="size-5" />
+                      <DropdownMenuTrigger
+                        asChild
+                        onClick={(e) => e.preventDefault()}
+                      >
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="shrink-0 hover:bg-zinc-700 h-7 w-7"
+                        >
+                          <BsThreeDotsVertical className="size-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuGroup>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => e.preventDefault()}>
                             <CgPlayListAdd className="h-5 w-5 mr-2" />
                             Add to your list
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => e.preventDefault()}>
                             <MdPlaylistRemove className="h-5 w-5 mr-2" />
                             Remove from your list
                           </DropdownMenuItem>
@@ -204,13 +273,12 @@ const Quizzespage = () => {
                     </DropdownMenu>
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}
       </div>
 
-      {/* Real total pages based on actual topic count */}
       <QuizPagination />
       <Footer />
     </div>
