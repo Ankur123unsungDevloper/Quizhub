@@ -464,28 +464,83 @@ export function Menu() {
           <NavigationMenuContent className="min-w-7xl flex justify-center">
             <div className="flex flex-row w-full">
 
-              <div className="flex flex-col gap-3 border-r p-6 items-start justify-start w-120">
-                <Link href="/community/discussions">Discussions</Link>
-                <Link href="/community/questions">Questions</Link>
-                <Link href="/community/leaderboard">Leaderboard</Link>
-                <Link href="/community/events">Events</Link>
-                <Link href="/community/groups">Study Groups</Link>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 p-6 items-center justify-center w-full">
-                <div className="h-24 rounded-lg bg-zinc-200"></div>
-                <div className="h-24 rounded-lg bg-zinc-200"></div>
-                <div className="h-24 rounded-lg bg-zinc-200"></div>
-                <div className="h-24 rounded-lg bg-zinc-200"></div>
-              </div>
-
-              <div className="border-l p-6 items-end justify-end w-100">
-                <p className="text-sm text-muted-foreground">Community Highlight</p>
-                <div className="mt-4 rounded-lg bg-zinc-800 p-4">
-                  Join Weekly Coding Battles
+              <div className="flex flex-col border-r p-2 items-start justify-start w-80">
+                <div>
+                  <h3 className="text-2xl font-semibold text-white">Discover Quizzes</h3>
+                </div>
+                <div className="flex flex-col items-center justify-center w-full gap-4 mt-6">
+                  <Button asChild className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
+                    <Link href="/quizzes/daily">Daily Quiz</Link>
+                  </Button>
+                  <Button asChild className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
+                    <Link href="/quizzes/weekly">Weekly Challenge</Link>
+                  </Button>
+                  <Button asChild className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
+                    <Link href="/quizzes/mock">Mock Tests</Link>
+                  </Button>
+                  <Button asChild className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
+                    <Link href="/quizzes/popular">Popular Quizzes</Link>
+                  </Button>
+                  <Button asChild className="shrink-0 bg-zinc-900 text-start justify-start hover:bg-zinc-700 text-white w-full">
+                    <Link href="/quizzes/new">New Quizzes</Link>
+                  </Button>
                 </div>
               </div>
-
+              {/* CENTER */}
+              <div className="flex flex-col items-center justify-center w-full">
+                <div className="flex flex-row w-full">
+                  <div className="flex flex-col w-full items-start justify-start p-2">
+                    <div className="flex items-center justify-center gap-2 mb-4 hover:underline cursor-pointer">
+                      <Link href="/quizzes/trending" className="text-2xl font-semibold text-white">Top Trending</Link>
+                      <FaChevronRight className="h-5 w-5 text-white" />
+                    </div>
+                    <div className="flex flex-col w-full gap-y-6">
+                      <div className="flex flex-row w-full gap-2">
+                        <div className="h-40 w-full rounded-lg bg-zinc-700 hover:bg-zinc-600 transition flex items-end p-3"></div>
+                        <div className="h-40 w-full rounded-lg bg-zinc-700 hover:bg-zinc-600 transition flex items-end p-3"></div>
+                      </div>
+                      <div className="flex flex-row w-full gap-2">
+                        <div className="h-40 w-full rounded-lg bg-zinc-700 hover:bg-zinc-600 transition flex items-end p-3"></div>
+                        <div className="h-40 w-full rounded-lg bg-zinc-700 hover:bg-zinc-600 transition flex items-end p-3"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col w-full items-start justify-start p-2">
+                    <div className="flex items-center justify-center gap-2 mb-4 hover:underline cursor-pointer">
+                      <Link href="/quizzes/popular" className="text-2xl font-semibold text-white">Most Popular</Link>
+                      <FaChevronRight className="h-5 w-5 text-white" />
+                    </div>
+                    <div className="flex flex-col w-full gap-y-6">
+                      <div className="flex flex-row w-full gap-2">
+                        <div className="h-40 w-full rounded-lg bg-zinc-700 hover:bg-zinc-600 transition flex items-end p-3"></div>
+                        <div className="h-40 w-full rounded-lg bg-zinc-700 hover:bg-zinc-600 transition flex items-end p-3"></div>
+                      </div>
+                      <div className="flex flex-row w-full gap-2">
+                        <div className="h-40 w-full rounded-lg bg-zinc-700 hover:bg-zinc-600 transition flex items-end p-3"></div>
+                        <div className="h-40 w-full rounded-lg bg-zinc-700 hover:bg-zinc-600 transition flex items-end p-3"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col w-full items-start justify-start p-2">
+                    <div className="flex items-center justify-center gap-2 mb-4 hover:underline cursor-pointer">
+                      <Link href="/quizzes/viewed" className="text-2xl font-semibold text-white">Most Viewed</Link>
+                      <FaChevronRight className="h-5 w-5 text-white" />
+                    </div>
+                    <div className="flex flex-col w-full gap-y-6">
+                      <div className="flex flex-row w-full gap-2">
+                        <div className="h-40 w-full rounded-lg bg-zinc-700 hover:bg-zinc-600 transition flex items-end p-3"></div>
+                        <div className="h-40 w-full rounded-lg bg-zinc-700 hover:bg-zinc-600 transition flex items-end p-3"></div>
+                      </div>
+                      <div className="flex flex-row w-full gap-2">
+                        <div className="h-40 w-full rounded-lg bg-zinc-700 hover:bg-zinc-600 transition flex items-end p-3"></div>
+                        <div className="h-40 w-full rounded-lg bg-zinc-700 hover:bg-zinc-600 transition flex items-end p-3"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="p-6 items-end justify-end w-100">
+                </div>
             </div>
           </NavigationMenuContent>
         </NavigationMenuItem>

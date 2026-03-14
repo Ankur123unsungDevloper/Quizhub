@@ -165,7 +165,7 @@ const QuizPage = () => {
   const profile = useQuery(api.userProfiles.getProfileByUserId, dbUser ? { userId: dbUser._id } : "skip");
   const topic = useQuery(api.questions.getTopicWithExam, { topicId });
   const existingQuestions = useQuery(api.questions.getQuestionsByTopic, { topicId });
-  const cardDetail = useQuery(api.cards.getCardDetail, { entityType: "topic", entityId: topicId });
+  const cardDetail = useQuery(api.cards.getCardDetail, { topicId });
   const incrementViewCount = useMutation(api.cards.incrementViewCount);
 
   const generateQuestions = useAction(api.ai.generateQuestions.generateAndStoreQuestions);
@@ -173,7 +173,7 @@ const QuizPage = () => {
 
   // ── Increment view count on load ──
   useEffect(() => {
-    incrementViewCount({ entityType: "topic", entityId: topicId });
+    incrementViewCount({ topicId });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [topicId]);
 

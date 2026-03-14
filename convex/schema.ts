@@ -193,4 +193,62 @@ export default defineSchema({
     issuesFixed: v.number(),
     errorMessage: v.optional(v.string()),
   }).index("by_status", ["status"]),
+
+
+  paperExamSubmissions: defineTable({
+    // Who submitted
+    userId: v.id("users"),
+    topicId: v.id("topics"),
+    examId: v.id("exams"),
+
+    // The generated question paper (stored as JSON so we can grade against it)
+    questionPaper: v.array(
+      v.object({
+        questionNumber: v.number(),
+        questionText: v.string(),
+        marks: v.number(),           // marks allocated to this question
+        modelAnswer: v.string(),     // AI-generated ideal answer for grading
+        type: v.union(
+          v.literal("short"),        // 2-3 lines
+          v.literal("long"),         // full paragraph
+          v.literal("numerical"),    // calculation based
+          v.literal("diagram"),      // draw and label
+        ),
+      })
+    ),
+    totalMarks: v.number(),          // sum of all question marks
+
+    // Student's submission
+    fileUrl: v.string(),             // Cloudinary URL of uploaded answer sheet
+    fileType: v.union(v.literal("image"), v.literal("pdf")),
+    submittedAt: v.number(),
+    timeTakenSeconds: v.number(),
+
+    // Grading status
+    status: v.union(
+      v.literal("submitted"),        // uploaded, not yet graded
+      v.literal("grading"),          // Gemini is processing
+      v.literal("graded"),           // result ready
+      v.literal("failed"),           // grading failed, can retry
+    ),
+
+    // Result (filled after grading)
+    marksObtained: v.optional(v.number()),
+    percentage: v.optional(v.number()),
+    feedback: v.optional(
+      v.array(
+        v.object({
+          questionNumber: v.number(),
+          marksAwarded: v.number(),
+          maxMarks: v.number(),
+          studentAnswer: v.string(),   // what Gemini extracted from handwriting
+          feedback: v.string(),        // "Good explanation but missed the formula"
+          modelAnswer: v.string(),     // shown for comparison
+        })
+      )
+    ),
+    gradedAt: v.optional(v.number()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_status", ["status"]),
 });

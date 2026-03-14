@@ -1,27 +1,18 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { internalMutation, internalQuery } from "../_generated/server";
+// NO "use node" here — only internalQuery and internalMutation allowed
+
+import { internalQuery, internalMutation } from "../_generated/server";
 import { v } from "convex/values";
 import { Id } from "../_generated/dataModel";
 
-// ─── Known popular Indian exams ───────────────────────────────────────────────
-export const POPULAR_EXAM_NAMES = [
-  "JEE Main", "JEE Advanced", "NEET", "GATE",
-  "UPSC Prelims", "CAT", "SSC CGL", "Bank PO",
-  "Railway NTPC", "NDA", "CLAT", "CUET",
-  "Class 10 Boards", "Class 12 Boards",
-  "Class 9", "Class 11", "BCA", "B.Tech CSE", "MBA",
-];
-
-// ─── Get existing exam names ──────────────────────────────────────────────────
+// ─── Get all existing exam names ──────────────────────────────────────────────
 export const getExistingExamNames = internalQuery({
   args: {},
   handler: async (ctx) => {
-    const exams = await ctx.db.query("exams").collect();
-    return exams.map((e) => ({ id: e._id, name: e.name }));
+    return await ctx.db.query("exams").collect();
   },
 });
 
-// ─── Get subjects with low topics ─────────────────────────────────────────────
+// ─── Get subjects with fewer than 5 topics ────────────────────────────────────
 export const getSubjectsWithLowTopics = internalQuery({
   args: {},
   handler: async (ctx) => {
@@ -34,11 +25,12 @@ export const getSubjectsWithLowTopics = internalQuery({
         .withIndex("by_subject", (q) => q.eq("subjectId", subject._id))
         .collect();
 
-      if (topics.length < 8) {
+      if (topics.length < 5) {
         const exam = await ctx.db.get(subject.examId);
         result.push({
           subjectId: subject._id,
           subjectName: subject.name,
+          examId: subject.examId,
           examName: exam?.name ?? "Unknown",
           topicCount: topics.length,
         });
@@ -60,90 +52,66 @@ export const getTopicsWithNoQuestions = internalQuery({
       const questions = await ctx.db
         .query("questions")
         .withIndex("by_topic", (q) => q.eq("topicId", topic._id))
-        .collect();
+        .first();
 
-      if (questions.length === 0) {
+      if (!questions) {
         const subject = await ctx.db.get(topic.subjectId);
         const exam = subject ? await ctx.db.get(subject.examId) : null;
         result.push({
           topicId: topic._id,
           topicName: topic.name,
-          subjectName: subject?.name ?? "Unknown",
-          examName: exam?.name ?? "Unknown",
           subjectId: topic.subjectId,
+          subjectName: subject?.name ?? "Unknown",
           examId: exam?._id,
+          examName: exam?.name ?? "Unknown",
         });
       }
     }
 
+    return result;
+  },
+});
+
+// ─── Get topics/cards with no imageUrl ───────────────────────────────────────
+// Returns shape expected by agent.ts: { entityType, entityId, entityName, category }
+export const getCardsWithNoImages = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const topics = await ctx.db.query("topics").collect();
+    const result = [];
+
+    for (const topic of topics) {
+      if (!topic.imageUrl) {
+        const subject = await ctx.db.get(topic.subjectId);
+        const exam = subject ? await ctx.db.get(subject.examId) : null;
+
+        result.push({
+          entityType: "topic" as const,
+          entityId: topic._id as string,
+          entityName: topic.name,
+          category: exam?.name ?? subject?.name ?? "General",
+        });
+      }
+    }
+
+    // Limit to 5 per run to avoid Pollinations rate issues
     return result.slice(0, 5);
   },
 });
 
-// ─── Get cards with no images ─────────────────────────────────────────────────
-export const getCardsWithNoImages = internalQuery({
-  args: {},
-  handler: async (ctx) => {
-    const exams = await ctx.db.query("exams").collect();
-    const subjects = await ctx.db.query("subjects").collect();
-    const topics = await ctx.db.query("topics").collect();
-
-    const missingImages: {
-      entityType: "exam" | "subject" | "topic";
-      entityId: string;
-      entityName: string;
-      category: string | undefined;
-    }[] = [];
-
-    for (const exam of exams.filter((e) => !e.imageUrl)) {
-      missingImages.push({
-        entityType: "exam",
-        entityId: exam._id as string,
-        entityName: exam.name,
-        category: exam.category,
-      });
-    }
-
-    for (const subject of subjects.filter((s) => !s.imageUrl)) {
-      missingImages.push({
-        entityType: "subject",
-        entityId: subject._id as string,
-        entityName: subject.name,
-        category: undefined,
-      });
-    }
-
-    for (const topic of topics.filter((t) => !t.imageUrl)) {
-      missingImages.push({
-        entityType: "topic",
-        entityId: topic._id as string,
-        entityName: topic.name,
-        category: undefined,
-      });
-    }
-
-    return missingImages.slice(0, 5);
-  },
-});
-
-// ─── Get low quality questions ────────────────────────────────────────────────
+// ─── Get low quality questions (less than 4 options) ─────────────────────────
 export const getLowQualityQuestions = internalQuery({
   args: {},
   handler: async (ctx) => {
     const questions = await ctx.db.query("questions").collect();
     return questions
-      .filter(
-        (q) =>
-          q.questionText.length < 20 ||
-          q.explanation.length < 10 ||
-          q.options.length < 4
-      )
+      .filter((q) => !q.options || q.options.length < 4)
       .slice(0, 10)
       .map((q) => ({ questionId: q._id }));
   },
 });
 
-// ─── Delete low quality question ──────────────────────────────────────────────
+// ─── Delete a low quality question ───────────────────────────────────────────
 export const deleteLowQualityQuestion = internalMutation({
   args: { questionId: v.id("questions") },
   handler: async (ctx, args) => {
@@ -151,23 +119,18 @@ export const deleteLowQualityQuestion = internalMutation({
   },
 });
 
-// ─── Create agent log ─────────────────────────────────────────────────────────
+// ─── Create agent log entry ───────────────────────────────────────────────────
 export const createAgentLog = internalMutation({
   args: {
-    status: v.union(
-      v.literal("running"),
-      v.literal("completed"),
-      v.literal("failed")
-    ),
+    status: v.union(v.literal("running"), v.literal("completed"), v.literal("failed")),
     summary: v.string(),
     examsAdded: v.number(),
     topicsAdded: v.number(),
     questionsGenerated: v.number(),
     imagesGenerated: v.number(),
     issuesFixed: v.number(),
-    errorMessage: v.optional(v.string()),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<Id<"agentLogs">> => {
     return await ctx.db.insert("agentLogs", {
       ...args,
       runAt: Date.now(),
@@ -179,11 +142,7 @@ export const createAgentLog = internalMutation({
 export const updateAgentLog = internalMutation({
   args: {
     logId: v.id("agentLogs"),
-    status: v.union(
-      v.literal("running"),
-      v.literal("completed"),
-      v.literal("failed")
-    ),
+    status: v.union(v.literal("running"), v.literal("completed"), v.literal("failed")),
     summary: v.string(),
     examsAdded: v.number(),
     topicsAdded: v.number(),
@@ -194,6 +153,6 @@ export const updateAgentLog = internalMutation({
   },
   handler: async (ctx, args) => {
     const { logId, ...rest } = args;
-    await ctx.db.patch(logId, rest);
+    await ctx.db.patch(logId, { ...rest });
   },
 });

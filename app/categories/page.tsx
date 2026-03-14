@@ -1,28 +1,19 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
-import {
-  useSearchParams,
-  useRouter
-} from "next/navigation";
-import Image from "next/image";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { useState, useMemo } from "react";
 
 import { useQuery } from "convex/react";
-
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 
-import {
-  Card,
-  CardContent
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 
 import Footer from "../(platform)/footer/footer";
 import Navbar from "../(platform)/navbar/navbar";
-
 import Topbar from "./_components/topbar";
-
-import { useMemo } from "react";
 
 type CardItem = {
   _id: string;
@@ -33,36 +24,39 @@ type CardItem = {
 };
 
 // ─── Single Category Card ─────────────────────────────────────────────────────
-const CategoryCard = ({ item }: { item: CardItem }) => (
-  <Link href={item.href}>
-    <Card className="bg-zinc-900 border-zinc-800 hover:border-[#FF8D28] py-0 overflow-hidden transition duration-200 group h-40 relative">
-      <CardContent className="flex flex-col items-center justify-center px-0 h-full">
-        {item.imageUrl ? (
-          <Image
-            src={item.imageUrl}
-            alt={item.name}
-            fill
-            sizes="(max-width: 640px) 50vw, 16vw"
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
-            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-          />
-        ) : (
-          <div className="absolute inset-0 bg-linear-to-br from-zinc-700 to-zinc-800" />
-        )}
-        {/* Dark overlay so text is always readable */}
-        <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/30 to-transparent" />
-        {/* Type badge */}
-        <span className="absolute top-2 right-2 text-[10px] uppercase tracking-wide bg-black/50 text-zinc-400 px-1.5 py-0.5 rounded">
-          {item.cardType}
-        </span>
-        {/* Name */}
-        <p className="absolute bottom-3 left-3 right-3 text-white text-sm font-semibold line-clamp-2 leading-snug">
-          {item.name}
-        </p>
-      </CardContent>
-    </Card>
-  </Link>
-);
+const CategoryCard = ({ item }: { item: CardItem }) => {
+  const [imgError, setImgError] = useState(false);
+  const showImage = !!item.imageUrl && !imgError;
+
+  return (
+    <Link href={item.href}>
+      <Card className="bg-zinc-900 border-zinc-800 hover:border-[#FF8D28] py-0 overflow-hidden transition duration-200 group h-40 relative">
+        <CardContent className="flex flex-col items-center justify-center px-0 h-full">
+          {showImage ? (
+            <img
+              src={item.imageUrl}
+              alt={item.name}
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <div className="absolute inset-0 bg-linear-to-br from-zinc-700 to-zinc-800" />
+          )}
+          {/* Dark overlay */}
+          <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/30 to-transparent" />
+          {/* Type badge */}
+          <span className="absolute top-2 right-2 text-[10px] uppercase tracking-wide bg-black/50 text-zinc-400 px-1.5 py-0.5 rounded">
+            {item.cardType}
+          </span>
+          {/* Name */}
+          <p className="absolute bottom-3 left-3 right-3 text-white text-sm font-semibold line-clamp-2 leading-snug">
+            {item.name}
+          </p>
+        </CardContent>
+      </Card>
+    </Link>
+  );
+};
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 const SkeletonCard = () => (
@@ -75,38 +69,46 @@ const CategoriesPage = () => {
   const searchParams = useSearchParams();
   const urlQuery = searchParams.get("q")?.toLowerCase().trim() ?? "";
 
-  // Fetch all data
-  const allExams   = useQuery(api.admin.getAllExams) as { _id: Id<"exams">; name: string; imageUrl?: string }[] | undefined;
-  const allCards   = useQuery(api.cards.getRandomCards, { limit: 200 });
+  const allExams = useQuery(api.admin.getAllExams) as
+    | { _id: Id<"exams">; name: string; imageUrl?: string }[]
+    | undefined;
 
-  const isLoading = !allExams || !allCards;
+  // getRandomCards returns topics — we type it loosely here
+  const allTopics = useQuery(api.cards.getRandomCards, { limit: 200 }) as
+    | {
+        _id: Id<"topics">;
+        name: string;
+        imageUrl?: string;
+        parentName?: string;
+      }[]
+    | undefined;
 
-  // Build unified card list: exams + subjects + topics
+  const isLoading = !allExams || !allTopics;
+
+  // Build unified card list
   const allItems: CardItem[] = useMemo(() => {
-    if (!allExams || !allCards) return [];
+    if (!allExams || !allTopics) return [];
 
     const examCards: CardItem[] = allExams.map((e) => ({
       _id: e._id as string,
       name: e.name,
       imageUrl: e.imageUrl,
-      cardType: "exam",
+      cardType: "exam" as const,
       href: "/quizzes",
     }));
 
-    const otherCards: CardItem[] = allCards
-      .filter((c: { cardType: string }) => c.cardType !== "exam")
-      .map((c: { _id: string; name: string; imageUrl?: string; cardType: "exam" | "subject" | "topic" }) => ({
-        _id: c._id,
-        name: c.name,
-        imageUrl: c.imageUrl,
-        cardType: c.cardType,
-        href: c.cardType === "topic" ? `/quiz/${c._id}` : "/quizzes",
-      }));
+    const topicCards: CardItem[] = allTopics.map((t) => ({
+      _id: t._id as string,
+      name: t.name,
+      imageUrl: t.imageUrl,
+      cardType: "topic" as const,
+      href: `/quiz/${t._id}`,
+    }));
 
-    return [...examCards, ...otherCards];
-  }, [allExams, allCards]);
+    return [...examCards, ...topicCards];
+  }, [allExams, allTopics]);
 
-  // Filter by search query if present
+  // Filter by search query
   const filtered = useMemo(() => {
     if (!urlQuery) return allItems;
     return allItems.filter((item) =>
@@ -115,23 +117,23 @@ const CategoriesPage = () => {
   }, [allItems, urlQuery]);
 
   const popular = filtered.slice(0, 12);
-  const rest    = filtered.slice(12);
+  const rest = filtered.slice(12);
 
   return (
     <div className="min-h-screen flex flex-col bg-zinc-950">
       <Navbar />
 
-      {/* Main content — sandwiched between navbar and footer, no overlap */}
       <div className="flex-1 w-full flex flex-col items-center pt-28 pb-10">
         <div className="w-full px-6">
           <Topbar />
 
-          {/* Search context label */}
           {urlQuery && (
             <div className="mt-4 mb-2 flex items-center gap-3">
               <p className="text-zinc-400 text-sm">
                 Results for{" "}
-                <span className="text-[#FF8D28] font-medium">&quot;{searchParams.get("q")}&quot;</span>
+                <span className="text-[#FF8D28] font-medium">
+                  &quot;{searchParams.get("q")}&quot;
+                </span>
               </p>
               <button
                 onClick={() => router.push("/categories")}
@@ -142,7 +144,7 @@ const CategoriesPage = () => {
             </div>
           )}
 
-          {/* ── Most Popular (first 12) ── */}
+          {/* Most Popular */}
           <div className="mt-10">
             <h2 className="text-3xl font-bold text-white mb-6">
               {urlQuery ? "Matching Categories" : "Most Popular Quiz Categories"}
@@ -173,7 +175,7 @@ const CategoriesPage = () => {
             )}
           </div>
 
-          {/* ── All Categories (rest) ── */}
+          {/* All Categories */}
           {!isLoading && rest.length > 0 && (
             <div className="mt-20">
               <h2 className="text-3xl font-bold text-white mb-6">All Categories</h2>

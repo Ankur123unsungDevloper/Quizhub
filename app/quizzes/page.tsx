@@ -16,6 +16,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
 import Image from "next/image";
 import Link from "next/link";
 
@@ -208,7 +209,7 @@ const Quizzespage = () => {
                             src={card.imageUrl}
                             alt={card.name}
                             fill
-                            className="object-cover transition-transform duration-300 group-hover:scale-105"
+                            className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
                             onError={(e) => {
                               (e.target as HTMLImageElement).style.display = "none";
                             }}

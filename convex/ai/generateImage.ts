@@ -2,72 +2,68 @@
 
 import { action } from "../_generated/server";
 import { v } from "convex/values";
-import { api } from "../_generated/api";
+import { internal } from "../_generated/api";
+import { Id } from "../_generated/dataModel";
+
+async function fetchPexelsImage(query: string): Promise<string> {
+  const PEXELS_API_KEY = process.env.PEXELS_API_KEY!;
+
+  const response = await fetch(
+    `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=1&orientation=landscape`,
+    {
+      headers: {
+        Authorization: PEXELS_API_KEY,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Pexels API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+
+  if (!data.photos || data.photos.length === 0) {
+    // Fallback: search just "education study" if specific query has no results
+    const fallback = await fetch(
+      `https://api.pexels.com/v1/search?query=education+study&per_page=15&orientation=landscape`,
+      { headers: { Authorization: PEXELS_API_KEY } }
+    );
+    const fallbackData = await fallback.json();
+    // Pick a somewhat random photo from fallback results using query length as offset
+    const index = query.length % (fallbackData.photos?.length ?? 1);
+    return fallbackData.photos?.[index]?.src?.large ?? `https://picsum.photos/seed/${query.length}/800/450`;
+  }
+
+  // Return the large photo URL (800px wide)
+  return data.photos[0].src.large;
+}
 
 export const generateAndStoreImage = action({
   args: {
-    entityType: v.union(
-      v.literal("exam"),
-      v.literal("subject"),
-      v.literal("topic")
-    ),
+    entityType: v.union(v.literal("topic"), v.literal("exam"), v.literal("subject")),
     entityId: v.string(),
     entityName: v.string(),
     category: v.optional(v.string()),
   },
-  handler: async (ctx, args): Promise<{ success: boolean; imageUrl: string }> => {
+  handler: async (ctx, args): Promise<string> => {
+    const { entityType, entityId, entityName, category } = args;
 
-    const prompt = buildImagePrompt(
-      args.entityName,
-      args.entityType,
-      args.category
-    );
+    // Build a meaningful search query
+    const query = category
+      ? `${entityName} ${category}`
+      : `${entityName} education`;
 
-    // ✅ Pollinations generates image on-demand when URL is loaded
-    // No API call needed — just build the URL and store it
-    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=512&nologo=true&model=flux`;
+    const imageUrl = await fetchPexelsImage(query);
 
-    await ctx.runMutation(api.cards.updateImageUrl, {
-      entityType: args.entityType,
-      entityId: args.entityId,
-      imageUrl,
-    });
+    if (entityType === "topic") {
+      await ctx.runMutation(internal.cards.updateImageUrl, {
+        topicId: entityId as Id<"topics">,
+        imageUrl,
+      });
+    }
 
-    return { success: true, imageUrl };
+    console.log(`✅ Pexels image stored for "${entityName}": ${imageUrl}`);
+    return imageUrl;
   },
 });
-
-const buildImagePrompt = (
-  name: string,
-  type: string,
-  category?: string
-): string => {
-  const style = "flat design illustration vibrant colors clean modern background no text no letters professional educational banner";
-
-  const subjectPrompts: Record<string, string> = {
-    physics:     "atomic particles electromagnetic waves blue energy field scientific",
-    chemistry:   "molecular structures chemical bonds laboratory flask green emerald",
-    mathematics: "geometric shapes mathematical graphs purple abstract patterns",
-    biology:     "DNA helix cell structure nature leaves green organic",
-    english:     "open book pen writing literature warm rose tones",
-    history:     "ancient architecture timeline golden amber tones",
-    geography:   "world map topographic lines blue green earth",
-    computer:    "circuit board code symbols dark tech glowing lines",
-    economics:   "graphs charts financial symbols blue business",
-    reasoning:   "brain neural network logic puzzle violet tones",
-  };
-
-  const nameLower = name.toLowerCase();
-
-  for (const [key, visual] of Object.entries(subjectPrompts)) {
-    if (nameLower.includes(key)) {
-      return `Educational banner ${name} ${visual} ${style}`;
-    }
-  }
-
-  if (type === "exam") {
-    return `Educational banner ${name} exam ${category ?? "academic"} achievement orange gold ${style}`;
-  }
-
-  return `Educational banner topic ${name} learning colorful abstract ${style}`;
-};

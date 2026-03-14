@@ -9,15 +9,19 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import Image from "next/image";
+
 import Link from "next/link";
+
 import { useMutation } from "convex/react";
+
 import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
 
 import { FaEye } from "react-icons/fa";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { CgPlayListAdd } from "react-icons/cg";
 import { MdPlaylistRemove } from "react-icons/md";
+import Image from "next/image";
 
 type CardData = {
   _id: string;
@@ -50,8 +54,7 @@ export const QuizCard = ({ card }: { card: CardData }) => {
 
   const handleClick = () => {
     incrementViewCount({
-      entityType: card.cardType,
-      entityId: card._id,
+      topicId: card._id as Id<"topics">,
     });
   };
 
@@ -71,7 +74,7 @@ export const QuizCard = ({ card }: { card: CardData }) => {
                   src={card.imageUrl}
                   alt={card.name}
                   fill
-                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
                   onError={(e) => {
                     // Hide broken image, show fallback
                     (e.target as HTMLImageElement).style.display = "none";
