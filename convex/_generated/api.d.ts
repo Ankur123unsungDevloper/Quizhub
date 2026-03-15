@@ -15,6 +15,7 @@ import type * as ai_generateImage from "../ai/generateImage.js";
 import type * as ai_generateQuestions from "../ai/generateQuestions.js";
 import type * as ai_generateStructure from "../ai/generateStructure.js";
 import type * as ai_prompts from "../ai/prompts.js";
+import type * as aibook from "../aibook.js";
 import type * as attempts from "../attempts.js";
 import type * as cards from "../cards.js";
 import type * as crons from "../crons.js";
@@ -41,6 +42,7 @@ declare const fullApi: ApiFromModules<{
   "ai/generateQuestions": typeof ai_generateQuestions;
   "ai/generateStructure": typeof ai_generateStructure;
   "ai/prompts": typeof ai_prompts;
+  aibook: typeof aibook;
   attempts: typeof attempts;
   cards: typeof cards;
   crons: typeof crons;

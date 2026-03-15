@@ -251,4 +251,12 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_status", ["status"]),
+  
+  aibookPages: defineTable({
+    bookId: v.string(),
+    userId: v.string(),
+    title: v.string(),
+    pageNumber: v.number(),
+    text: v.string(),
+  }).index("by_book", ["bookId"]),
 });
