@@ -444,3 +444,71 @@ export const getWeakStrongTopics = query({
     };
   },
 });
+
+// ─── Leaderboard — top users by quizzes taken + accuracy ─────────────────────
+export const getLeaderboard = query({
+  args: {},
+  handler: async (ctx) => {
+    const stats = await ctx.db.query("userTopicStats").collect();
+
+    const userMap = new Map<string, {
+      userId: string;
+      totalQuizzes: number;
+      totalCorrect: number;
+      totalAttempted: number;
+    }>();
+
+    for (const s of stats) {
+      const existing = userMap.get(s.userId);
+      if (existing) {
+        existing.totalQuizzes += 1;
+        existing.totalCorrect += s.correct ?? 0;
+        existing.totalAttempted += s.attempted ?? 0;
+      } else {
+        userMap.set(s.userId, {
+          userId: s.userId,
+          totalQuizzes: 1,
+          totalCorrect: s.correct ?? 0,
+          totalAttempted: s.attempted ?? 0,
+        });
+      }
+    }
+
+    const enriched = await Promise.all(
+      Array.from(userMap.values()).map(async (u) => {
+        const user = await ctx.db
+          .query("users")
+          .filter((q) => q.eq(q.field("clerkId"), u.userId))
+          .first();
+        const accuracy = u.totalAttempted > 0
+          ? Math.round((u.totalCorrect / u.totalAttempted) * 100)
+          : 0;
+        return {
+          userId: u.userId,
+          name: user?.name ?? "Student",
+          quizzes: u.totalQuizzes,
+          accuracy,
+          streak: 0,
+        };
+      })
+    );
+
+    return enriched
+      .sort((a, b) => b.quizzes - a.quizzes)
+      .slice(0, 10)
+      .map((u, i) => ({ ...u, rank: i + 1 }));
+  },
+});
+
+// ─── Community stats ──────────────────────────────────────────────────────────
+export const getCommunityStats = query({
+  args: {},
+  handler: async (ctx) => {
+    const users = await ctx.db.query("users").collect();
+    const attempts = await ctx.db.query("attempts").collect();
+    return {
+      totalStudents: users.length,
+      totalAttempts: attempts.length,
+    };
+  },
+});
