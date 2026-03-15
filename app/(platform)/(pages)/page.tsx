@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { QuizCard, QuizCardSkeletonGrid } from "./_components/quiz-card";
@@ -19,7 +20,7 @@ type CardType = {
   examName?: string;
 };
 
-const MainPage = () => {
+const MainPageContent = () => {
   const cards = useQuery(api.cards.getRandomCards, { limit: 20 });
 
   return (
@@ -39,7 +40,7 @@ const MainPage = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
             {cards.map((card) => (
-              <QuizCard key={card._id} card={card as CardType} />
+              <QuizCard key={card._id} card={{ ...card, cardType: "topic" } as CardType} />
             ))}
           </div>
         )}
@@ -50,4 +51,10 @@ const MainPage = () => {
   );
 };
 
-export default MainPage;
+export default function MainPage() {
+  return (
+    <Suspense fallback={null}>
+      <MainPageContent />
+    </Suspense>
+  );
+}
