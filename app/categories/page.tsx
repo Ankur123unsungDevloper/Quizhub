@@ -15,6 +15,8 @@ import Footer from "../(platform)/footer/footer";
 import Navbar from "../(platform)/navbar/navbar";
 import Topbar from "./_components/topbar";
 
+import { Suspense } from "react";
+
 type CardItem = {
   _id: string;
   name: string;
@@ -64,7 +66,7 @@ const SkeletonCard = () => (
 );
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
-const CategoriesPage = () => {
+const CategoriesPageContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const urlQuery = searchParams.get("q")?.toLowerCase().trim() ?? "";
@@ -194,4 +196,10 @@ const CategoriesPage = () => {
   );
 };
 
-export default CategoriesPage;
+export default function CategoriesPage() {
+  return (
+    <Suspense fallback={null}>
+      <CategoriesPageContent />
+    </Suspense>
+  );
+}

@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/button";
 import { FaCheckCircle, FaTimesCircle, FaMinus } from "react-icons/fa";
 import { HiDocumentText } from "react-icons/hi";
 
-export default function PaperExamResultPage() {
+import { Suspense } from "react";
+
+function PaperExamResultPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const submissionId = searchParams.get("id") as Id<"paperExamSubmissions"> | null;
@@ -185,5 +187,13 @@ export default function PaperExamResultPage() {
         </div>
       </div>
     </div>
+  );
+};
+
+export default function PaperExamResultPage() {
+  return (
+    <Suspense fallback={null}>
+      <PaperExamResultPageContent />
+    </Suspense>
   );
 }

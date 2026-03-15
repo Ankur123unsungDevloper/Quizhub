@@ -30,6 +30,8 @@ import { BsThreeDotsVertical } from "react-icons/bs";
 import { CgPlayListAdd } from "react-icons/cg";
 import { MdPlaylistRemove } from "react-icons/md";
 
+import { Suspense } from "react";
+
 const CARDS_PER_PAGE = 12;
 
 const fallbackGradients: Record<string, string> = {
@@ -86,7 +88,7 @@ function examDescription(name: string, original?: string): string {
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
-const Quizzespage = () => {
+const QuizzespageContent = () => {
   const { user } = useUser();
   const searchParams = useSearchParams();
   const currentPage = Number(searchParams.get("page") ?? "1");
@@ -286,4 +288,10 @@ const Quizzespage = () => {
   );
 };
 
-export default Quizzespage;
+export default function Quizzespage() {
+  return (
+    <Suspense fallback={null}>
+      <QuizzespageContent />
+    </Suspense>
+  );
+}
