@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -13,7 +14,7 @@ const steps = [
   { label: "Calculating marks", detail: "Applying marking scheme per question" },
 ];
 
-export default function ProcessingPage() {
+function ProcessingPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const submissionId = searchParams.get("id") as Id<"paperExamSubmissions"> | null;
@@ -23,7 +24,6 @@ export default function ProcessingPage() {
     submissionId ? { submissionId } : "skip"
   );
 
-  // Auto-redirect when graded
   useEffect(() => {
     if (status?.status === "graded") {
       router.push(`/paper-exam/result?id=${submissionId}`);
@@ -37,7 +37,6 @@ export default function ProcessingPage() {
     <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4">
       <div className="max-w-md w-full space-y-8 text-center">
 
-        {/* Animated brain icon */}
         <div className="relative mx-auto size-24">
           <div className="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping" />
           <div className="relative size-24 rounded-full bg-emerald-500/20 flex items-center justify-center">
@@ -56,12 +55,10 @@ export default function ProcessingPage() {
           </p>
         </div>
 
-        {/* Steps */}
         {!isFailed && (
           <div className="text-left space-y-3">
             {steps.map((step, i) => {
-              // Animate through steps visually
-              const isDone = false; // will be live once we track sub-steps
+              const isDone = false;
               return (
                 <div key={i} className="flex items-start gap-3">
                   <div className={`size-5 rounded-full shrink-0 mt-0.5 flex items-center justify-center text-[10px] font-bold ${
@@ -109,5 +106,13 @@ export default function ProcessingPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ProcessingPage() {
+  return (
+    <Suspense fallback={null}>
+      <ProcessingPageContent />
+    </Suspense>
   );
 }
