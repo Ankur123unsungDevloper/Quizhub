@@ -1,28 +1,28 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: [
+    "pdf-parse"
+  ],
   images: {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "res.cloudinary.com",
+        hostname: "res.cloudinary.com"
       },
       {
         protocol: "https",
-        hostname: "images.pexels.com",
+        hostname: "images.pexels.com"
       },
       {
         protocol: "https",
-        hostname: "picsum.photos",
+        hostname: "picsum.photos"
       },
       {
         protocol: "https",
-        hostname: "fastly.picsum.photos",
+        hostname: "fastly.picsum.photos"
       },
     ],
-  },
-  experimental: {
-    serverComponentsExternalPackages: ["pdf-parse"],
   },
 };
 
