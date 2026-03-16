@@ -5,7 +5,8 @@ import { siteConfig } from "@/config/site";
 
 import { ConvexClientProvider } from "@/components/providers/convex-provider";
 
-import { Analytics } from "@vercel/analytics/next"
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 export const metadata: Metadata = {
   title: {
@@ -37,7 +38,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="dark w-full h-full">
-        <Analytics/>
+        <Analytics />
+        <SpeedInsights/>
         <ConvexClientProvider>
           {children}
         </ConvexClientProvider>
