@@ -13,7 +13,7 @@ export const ConvexClientProvider = ({
   children: ReactNode
 }) => { 
   return (
-    <ClerkProvider>  {/* Remove publishableKey prop — Clerk reads it automatically */}
+    <ClerkProvider>
       <ConvexProviderWithClerk
         client={convex}
         useAuth={useAuth}
