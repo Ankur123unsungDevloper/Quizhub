@@ -20,6 +20,11 @@ export const metadata: Metadata = {
         url: "logo.svg",
         href: "logo.svg",
       },
+      {
+        media: "(prefers-color-scheme: dark)",
+        url: "logo.svg",
+        href: "logo.svg",
+      },
     ]
   }
 };
