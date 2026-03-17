@@ -170,6 +170,7 @@ export const EducationTab = ({
           <div className="space-y-1.5">
             <label className="text-zinc-400 text-xs uppercase tracking-wider">Preferred Name</label>
             <Input
+              value={preferredName}
               onChange={(e) => setPreferredName(e.target.value)}
               placeholder="What should we call you?"
               className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 focus-visible:ring-[#FF8D28]"
