@@ -45,6 +45,10 @@ const ActionButton = () => {
     }
   };
 
+  const handleSubscriptionClick = () => {
+    router.push("/subscription");
+  }
+
   const handleLogout = async () => {
     await signOut();
     router.push("/");
@@ -107,7 +111,10 @@ const ActionButton = () => {
                 )}
               </DropdownMenuItem>
               {/* Subscription */}
-              <DropdownMenuItem className="flex items-center gap-2 cursor-pointer text-zinc-300 hover:text-white focus:text-white focus:bg-zinc-800 rounded-lg">
+              <DropdownMenuItem
+                className="flex items-center gap-2 cursor-pointer text-zinc-300 hover:text-white focus:text-white focus:bg-zinc-800 rounded-lg"
+                onClick={handleSubscriptionClick}
+              >
                 <RiVipCrownLine className="size-5 text-yellow-400" />
                 Subscription
               </DropdownMenuItem>
