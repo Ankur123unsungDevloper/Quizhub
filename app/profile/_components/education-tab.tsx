@@ -40,6 +40,16 @@ type Props = {
   handleSave: () => Promise<void>;
 };
 
+// Simple read-only display row
+const Field = ({ label, value }: { label: string; value?: string }) => (
+  <div className="space-y-1.5">
+    <p className="text-zinc-400 text-xs uppercase tracking-wider">{label}</p>
+    <p className="text-white text-sm px-3 py-2.5 bg-zinc-800/50 rounded-lg border border-zinc-700/50 min-h-[40px] flex items-center">
+      {value || <span className="text-zinc-600 italic">Not set</span>}
+    </p>
+  </div>
+);
+
 export const EducationTab = ({
   user,
   preferredName, setPreferredName,
@@ -54,16 +64,29 @@ export const EducationTab = ({
   handleSave,
 }: Props) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const onSave = async () => {
+    // Validate required field before calling mutation
+    if (!educationType) {
+      toast.error("Please select your education type");
+      return;
+    }
+    setSaving(true);
     try {
       await handleSave();
       toast.success("Education details saved!");
       setIsEditing(false);
-    } catch {
-      toast.error("Failed to save");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to save — check console for details");
+    } finally {
+      setSaving(false);
     }
   };
+
+  const inputClass = "bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 focus-visible:ring-[#FF8D28] focus-visible:border-[#FF8D28]";
+  const selectTriggerClass = "bg-zinc-800 border-zinc-700 text-white";
 
   return (
     <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-6">
@@ -82,191 +105,226 @@ export const EducationTab = ({
             </Button>
           ) : (
             <>
-              <Button variant="outline" size="sm" onClick={() => setIsEditing(false)}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsEditing(false)}
+                className="border-zinc-700 text-zinc-300 hover:text-white"
+              >
                 Cancel
               </Button>
               <Button
                 size="sm"
                 onClick={onSave}
+                disabled={saving}
                 className="bg-[#FF8D28] hover:bg-[#ff8d28d9] text-white gap-2"
               >
-                <FaSave className="size-3.5" /> Save
+                <FaSave className="size-3.5" />
+                {saving ? "Saving..." : "Save"}
               </Button>
             </>
           )}
         </div>
       </div>
 
-      {/* Name Row — always readonly (from Clerk) */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <label className="text-zinc-400 text-sm">First Name</label>
-          <Input
-            value={user?.firstName ?? ""}
-            readOnly
-            className="bg-zinc-800 border-zinc-700 text-zinc-400 cursor-not-allowed"
+      {/* ── READ-ONLY MODE ─────────────────────────────────────────────────── */}
+      {!isEditing && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="First Name" value={user?.firstName ?? ""} />
+            <Field label="Last Name" value={user?.lastName ?? ""} />
+          </div>
+          <Field label="Email" value={user?.primaryEmailAddress?.emailAddress ?? ""} />
+          <Field label="Preferred Name" value={preferredName} />
+          <Field
+            label="Education Type"
+            value={
+              educationType === "school" ? "School Student"
+              : educationType === "college" ? "College Student"
+              : educationType === "competitive" ? "Competitive Exam"
+              : ""
+            }
           />
-        </div>
-        <div className="space-y-2">
-          <label className="text-zinc-400 text-sm">Last Name</label>
-          <Input
-            value={user?.lastName ?? ""}
-            readOnly
-            className="bg-zinc-800 border-zinc-700 text-zinc-400 cursor-not-allowed"
-          />
-        </div>
-      </div>
-
-      {/* Email — always readonly */}
-      <div className="space-y-2">
-        <label className="text-zinc-400 text-sm">Email</label>
-        <Input
-          value={user?.primaryEmailAddress?.emailAddress ?? ""}
-          readOnly
-          className="bg-zinc-800 border-zinc-700 text-zinc-400 cursor-not-allowed"
-        />
-      </div>
-
-      {/* Preferred Name — FIXED: readOnly when not editing, fully editable when editing */}
-      <div className="space-y-2">
-        <label className="text-zinc-400 text-sm">Preferred Name</label>
-        <Input
-          value={preferredName}
-          readOnly={!isEditing}
-          onChange={(e) => setPreferredName(e.target.value)}
-          placeholder="What should we call you?"
-          className={`bg-zinc-800 border-zinc-700 text-white transition-all ${
-            isEditing
-              ? "border-zinc-600 focus:border-[#FF8D28] focus:ring-[#FF8D28]/20"
-              : "text-zinc-400 cursor-not-allowed"
-          }`}
-        />
-      </div>
-
-      {/* Education Type */}
-      <div className="space-y-2">
-        <label className="text-zinc-400 text-sm">Your Role</label>
-        <Select
-          value={educationType}
-          disabled={!isEditing}
-          onValueChange={(v) => {
-            setEducationType(v as EducationType);
-            setStudentClass(""); setBranch(""); setExam("");
-          }}
-        >
-          <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
-            <SelectValue placeholder="Select education type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="school">School Student</SelectItem>
-            <SelectItem value="college">College Student</SelectItem>
-            <SelectItem value="competitive">Competitive Exam</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Dynamic field */}
-      {educationType === "school" && (
-        <div className="space-y-2">
-          <label className="text-zinc-400 text-sm">Class</label>
-          <Select value={studentClass} disabled={!isEditing} onValueChange={setStudentClass}>
-            <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
-              <SelectValue placeholder="Select class" />
-            </SelectTrigger>
-            <SelectContent>
-              {["9", "10", "11", "12"].map((c) => (
-                <SelectItem key={c} value={c}>Class {c}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {educationType === "school" && <Field label="Class" value={studentClass ? `Class ${studentClass}` : ""} />}
+          {educationType === "college" && <Field label="Branch" value={branch} />}
+          {educationType === "competitive" && <Field label="Target Exam" value={exam} />}
+          <Field label="Target Year" value={targetYear?.toString()} />
+          <div className="space-y-1.5">
+            <p className="text-zinc-400 text-xs uppercase tracking-wider">Strong Subjects</p>
+            <div className="flex flex-wrap gap-2 px-3 py-2.5 bg-zinc-800/50 rounded-lg border border-zinc-700/50 min-h-[40px]">
+              {strongSubjects.length > 0
+                ? strongSubjects.map(s => (
+                    <span key={s} className="text-xs px-2.5 py-1 rounded-full bg-green-900/50 text-green-300 border border-green-700/50">{s}</span>
+                  ))
+                : <span className="text-zinc-600 italic text-sm">Not set</span>
+              }
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <p className="text-zinc-400 text-xs uppercase tracking-wider">Weak Subjects</p>
+            <div className="flex flex-wrap gap-2 px-3 py-2.5 bg-zinc-800/50 rounded-lg border border-zinc-700/50 min-h-[40px]">
+              {weakSubjects.length > 0
+                ? weakSubjects.map(s => (
+                    <span key={s} className="text-xs px-2.5 py-1 rounded-full bg-red-900/50 text-red-300 border border-red-700/50">{s}</span>
+                  ))
+                : <span className="text-zinc-600 italic text-sm">Not set</span>
+              }
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <p className="text-zinc-400 text-xs uppercase tracking-wider">Daily Study Hours</p>
+            <p className="text-white text-sm px-3 py-2.5 bg-zinc-800/50 rounded-lg border border-zinc-700/50">
+              {studyHours} {studyHours === 1 ? "hour" : "hours"} / day
+            </p>
+          </div>
         </div>
       )}
 
-      {educationType === "college" && (
-        <div className="space-y-2">
-          <label className="text-zinc-400 text-sm">Branch</label>
-          <Select value={branch} disabled={!isEditing} onValueChange={setBranch}>
-            <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
-              <SelectValue placeholder="Select branch" />
-            </SelectTrigger>
-            <SelectContent>
-              {["Engineering", "Medical", "Computer Science", "Management", "Arts"].map((b) => (
-                <SelectItem key={b} value={b}>{b}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
+      {/* ── EDIT MODE ──────────────────────────────────────────────────────── */}
+      {isEditing && (
+        <div className="space-y-5">
 
-      {educationType === "competitive" && (
-        <div className="space-y-2">
-          <label className="text-zinc-400 text-sm">Target Exam</label>
-          <Select value={exam} disabled={!isEditing} onValueChange={setExam}>
-            <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
-              <SelectValue placeholder="Select exam" />
-            </SelectTrigger>
-            <SelectContent>
-              {["JEE", "NEET", "GATE", "CAT", "UPSC", "Other"].map((e) => (
-                <SelectItem key={e} value={e}>{e}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
+          {/* Name — always from Clerk, never editable */}
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="First Name" value={user?.firstName ?? ""} />
+            <Field label="Last Name" value={user?.lastName ?? ""} />
+          </div>
+          <Field label="Email" value={user?.primaryEmailAddress?.emailAddress ?? ""} />
 
-      {/* Target Year */}
-      <div className="space-y-2">
-        <label className="text-zinc-400 text-sm">Target Year</label>
-        <Select
-          value={targetYear?.toString()}
-          disabled={!isEditing}
-          onValueChange={(v) => setTargetYear(Number(v))}
-        >
-          <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
-            <SelectValue placeholder="Select year" />
-          </SelectTrigger>
-          <SelectContent>
-            {years.map((y) => (
-              <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+          {/* Preferred Name */}
+          <div className="space-y-1.5">
+            <label className="text-zinc-400 text-xs uppercase tracking-wider">Preferred Name</label>
+            <Input
+              value={preferredName}
+              onChange={(e) => setPreferredName(e.target.value)}
+              placeholder="What should we call you?"
+              className={inputClass}
+            />
+          </div>
 
-      {/* Strong Subjects */}
-      <SubjectInput
-        label="Strong Subjects"
-        selected={strongSubjects}
-        onChange={setStrongSubjects}
-        options={subjectMap[educationType] ?? []}
-        disabled={!isEditing}
-        color="green"
-      />
+          {/* Education Type */}
+          <div className="space-y-1.5">
+            <label className="text-zinc-400 text-xs uppercase tracking-wider">Education Type</label>
+            <Select
+              value={educationType}
+              onValueChange={(v) => {
+                setEducationType(v as EducationType);
+                setStudentClass(""); setBranch(""); setExam("");
+              }}
+            >
+              <SelectTrigger className={selectTriggerClass}>
+                <SelectValue placeholder="Select education type" />
+              </SelectTrigger>
+              <SelectContent className="bg-zinc-800 border-zinc-700">
+                <SelectItem value="school">School Student</SelectItem>
+                <SelectItem value="college">College Student</SelectItem>
+                <SelectItem value="competitive">Competitive Exam</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-      {/* Weak Subjects */}
-      <SubjectInput
-        label="Weak Subjects"
-        selected={weakSubjects}
-        onChange={setWeakSubjects}
-        options={subjectMap[educationType] ?? []}
-        disabled={!isEditing}
-        color="red"
-      />
+          {/* Dynamic field */}
+          {educationType === "school" && (
+            <div className="space-y-1.5">
+              <label className="text-zinc-400 text-xs uppercase tracking-wider">Class</label>
+              <Select value={studentClass} onValueChange={setStudentClass}>
+                <SelectTrigger className={selectTriggerClass}>
+                  <SelectValue placeholder="Select class" />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-800 border-zinc-700">
+                  {["9", "10", "11", "12"].map((c) => (
+                    <SelectItem key={c} value={c}>Class {c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
-      {/* Study Hours — FIXED: not disabled by pointer-events but by the disabled prop */}
-      <div className="space-y-2">
-        <label className="text-zinc-400 text-sm">Daily Study Hours</label>
-        <div className="flex justify-center py-4">
-          <CircularSlider
-            value={studyHours}
-            onChange={setStudyHours}
-            min={1}
-            max={12}
-            disabled={!isEditing}
-            size={180}
+          {educationType === "college" && (
+            <div className="space-y-1.5">
+              <label className="text-zinc-400 text-xs uppercase tracking-wider">Branch</label>
+              <Select value={branch} onValueChange={setBranch}>
+                <SelectTrigger className={selectTriggerClass}>
+                  <SelectValue placeholder="Select branch" />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-800 border-zinc-700">
+                  {["Engineering", "Medical", "Computer Science", "Management", "Arts"].map((b) => (
+                    <SelectItem key={b} value={b}>{b}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {educationType === "competitive" && (
+            <div className="space-y-1.5">
+              <label className="text-zinc-400 text-xs uppercase tracking-wider">Target Exam</label>
+              <Select value={exam} onValueChange={setExam}>
+                <SelectTrigger className={selectTriggerClass}>
+                  <SelectValue placeholder="Select exam" />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-800 border-zinc-700">
+                  {["JEE", "NEET", "GATE", "CAT", "UPSC", "Other"].map((e) => (
+                    <SelectItem key={e} value={e}>{e}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Target Year */}
+          <div className="space-y-1.5">
+            <label className="text-zinc-400 text-xs uppercase tracking-wider">Target Year</label>
+            <Select
+              value={targetYear?.toString()}
+              onValueChange={(v) => setTargetYear(Number(v))}
+            >
+              <SelectTrigger className={selectTriggerClass}>
+                <SelectValue placeholder="Select year" />
+              </SelectTrigger>
+              <SelectContent className="bg-zinc-800 border-zinc-700">
+                {years.map((y) => (
+                  <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Strong Subjects */}
+          <SubjectInput
+            label="Strong Subjects"
+            selected={strongSubjects}
+            onChange={setStrongSubjects}
+            options={subjectMap[educationType] ?? []}
+            disabled={false}
+            color="green"
           />
+
+          {/* Weak Subjects */}
+          <SubjectInput
+            label="Weak Subjects"
+            selected={weakSubjects}
+            onChange={setWeakSubjects}
+            options={subjectMap[educationType] ?? []}
+            disabled={false}
+            color="red"
+          />
+
+          {/* Study Hours */}
+          <div className="space-y-1.5">
+            <label className="text-zinc-400 text-xs uppercase tracking-wider">Daily Study Hours</label>
+            <div className="flex justify-center py-4">
+              <CircularSlider
+                value={studyHours}
+                onChange={setStudyHours}
+                min={1}
+                max={12}
+                size={180}
+              />
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

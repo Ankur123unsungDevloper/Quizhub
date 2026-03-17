@@ -1,10 +1,22 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import {
+  useState,
+  useEffect,
+  useRef
+} from "react";
+
 import { useUser } from "@clerk/nextjs";
-import { useMutation, useQuery } from "convex/react";
+
+import {
+  useMutation,
+  useQuery
+} from "convex/react";
+
 import { api } from "@/convex/_generated/api";
+
 import { useRouter } from "next/navigation";
 
 import Topbar from "./_components/topbar";
@@ -15,6 +27,8 @@ import { ProgressTab } from "./_components/progress-tab";
 import { PreferencesTab } from "./_components/preferences-tab";
 import { AccountTab } from "./_components/account-tab";
 import { TabTransition } from "./_components/tab-transition";
+
+import { toast } from "sonner";
 
 export type ProfileTab =
   | "overview"
@@ -56,9 +70,12 @@ const ProfilePage = () => {
   const [studyGoal, setStudyGoal] = useState("");
   const [reminderEnabled, setReminderEnabled] = useState(false);
 
-  // ── Sync user ──────────────────────────────────────────────────────────────
+  // ── Sync user ONCE on mount only ──────────────────────────────────────────
+  // Using a ref so this never re-runs and never overwrites typed input
+  const hasSynced = useRef(false);
   useEffect(() => {
-    if (!isLoaded || !user) return;
+    if (!isLoaded || !user || hasSynced.current) return;
+    hasSynced.current = true;
     syncUser({
       clerkId: user.id,
       name: user.fullName ?? "",
@@ -66,7 +83,7 @@ const ProfilePage = () => {
     });
   }, [isLoaded, user, syncUser]);
 
-  // ── Populate form ──────────────────────────────────────────────────────────
+  // ── Populate form from DB — only once when profile first loads ────────────
   const profileLoaded = useRef(false);
   useEffect(() => {
     if (!profile || profileLoaded.current) return;
@@ -86,8 +103,16 @@ const ProfilePage = () => {
     setStudyHours(profile.studyHoursPerDay ?? 4);
   }, [profile]);
 
+  // ── Save handler ───────────────────────────────────────────────────────────
   const handleSave = async () => {
     if (!dbUser) return;
+  
+    // Guard — educationType is required by schema
+    if (!educationType) {
+      toast.error("Please select your education type before saving");
+      return;
+    }
+  
     await saveProfile({
       userId: dbUser._id,
       preferredName,
@@ -100,7 +125,6 @@ const ProfilePage = () => {
       weakSubjects: weakSubjects.join(","),
       studyHoursPerDay: studyHours,
     });
-    router.push("/quizzes");
   };
 
   if (!isLoaded || !dbUser) {
@@ -155,7 +179,7 @@ const ProfilePage = () => {
             user={user}
             preferredName={preferredName}
             educationType={educationType}
-            completionPercent={completionPercent} // ✅ add this
+            completionPercent={completionPercent}
           />
 
           {/* Main Content */}
@@ -166,7 +190,7 @@ const ProfilePage = () => {
                   dbUser={dbUser}
                   user={user}
                   preferredName={preferredName}
-                  completionPercent={completionPercent} // ✅ add this
+                  completionPercent={completionPercent}
                 />
               )}
               {activeTab === "education" && (
@@ -179,7 +203,11 @@ const ProfilePage = () => {
                 <PreferencesTab {...sharedProps} />
               )}
               {activeTab === "account" && (
-                <AccountTab user={user} dbUser={dbUser} preferredName={preferredName} />
+                <AccountTab
+                  user={user}
+                  dbUser={dbUser}
+                  preferredName={preferredName}
+                />
               )}
             </TabTransition>
           </div>
