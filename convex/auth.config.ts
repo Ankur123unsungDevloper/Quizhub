@@ -3,7 +3,7 @@ import { AuthConfig } from "convex/server";
 export default {
   providers: [
     {
-      domain: "https://quizhub.ind.in",
+      domain: "https://clerk.quizhub.ind.in",
       applicationID: "convex",
     },
   ]
