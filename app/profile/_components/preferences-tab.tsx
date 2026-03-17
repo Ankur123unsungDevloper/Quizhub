@@ -30,10 +30,10 @@ const goals = [
 ];
 
 const quizSettings = [
-  { id: "timer", label: "Quiz Timer", description: "Enable countdown during quizzes" },
-  { id: "sound", label: "Sound Effects", description: "Play sounds on correct/wrong answers" },
-  { id: "instant", label: "Instant Feedback", description: "Show answer immediately after each question" },
-  { id: "shuffle", label: "Shuffle Questions", description: "Randomize question order every quiz" },
+  { id: "timer",   label: "Quiz Timer",        description: "Enable countdown during quizzes" },
+  { id: "sound",   label: "Sound Effects",      description: "Play sounds on correct/wrong answers" },
+  { id: "instant", label: "Instant Feedback",   description: "Show answer immediately after each question" },
+  { id: "shuffle", label: "Shuffle Questions",  description: "Randomize question order every quiz" },
 ];
 
 const Toggle = ({
@@ -57,6 +57,8 @@ const Toggle = ({
   </button>
 );
 
+type AppearanceTheme = "dark" | "darker" | "system";
+
 export const PreferencesTab = ({
   studyHours,
   setStudyHours,
@@ -74,6 +76,26 @@ export const PreferencesTab = ({
     shuffle: true,
   });
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
+  const [activeTheme, setActiveTheme] = useState<AppearanceTheme>("dark");
+
+  // ── Notification toggles with real state ─────────────────────────────────
+  const [achievementAlerts, setAchievementAlerts] = useState(true);
+  const [weeklyReport, setWeeklyReport] = useState(false);
+
+  const handleThemeChange = (theme: AppearanceTheme) => {
+    setActiveTheme(theme);
+    // Apply theme to document root
+    const root = document.documentElement;
+    if (theme === "darker") {
+      root.style.setProperty("--bg-base", "#000000");
+    } else if (theme === "dark") {
+      root.style.setProperty("--bg-base", "#09090b");
+    } else {
+      // system — respect prefers-color-scheme
+      root.style.removeProperty("--bg-base");
+    }
+    toast.success(`Theme set to ${theme}`);
+  };
 
   const onSave = async () => {
     setSaving(true);
@@ -96,9 +118,7 @@ export const PreferencesTab = ({
           <MdFlag className="text-[#FF8D28] size-5" />
           Study Goal
         </h2>
-        <p className="text-zinc-400 text-sm">
-          What is your main goal right now?
-        </p>
+        <p className="text-zinc-400 text-sm">What is your main goal right now?</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {goals.map((g) => (
             <button
@@ -112,15 +132,13 @@ export const PreferencesTab = ({
             >
               <span className="text-xl">{g.icon}</span>
               {g.label}
-              {studyGoal === g.label && (
-                <span className="ml-auto text-[#FF8D28]">✓</span>
-              )}
+              {studyGoal === g.label && <span className="ml-auto text-[#FF8D28]">✓</span>}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Study Hours */}
+      {/* Study Hours — FIXED circular slider */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-4">
         <h2 className="text-lg font-semibold text-white flex items-center gap-2">
           <MdAccessTime className="text-[#FF8D28] size-5" />
@@ -146,9 +164,9 @@ export const PreferencesTab = ({
         <div className="grid grid-cols-3 gap-3">
           {(["easy", "medium", "hard"] as const).map((d) => {
             const config = {
-              easy:   { label: "Easy",   color: "text-green-400",  bg: "bg-green-900/30  border-green-700/50",  active: "bg-green-900/50  border-green-500" },
-              medium: { label: "Medium", color: "text-yellow-400", bg: "bg-yellow-900/30 border-yellow-700/50", active: "bg-yellow-900/50 border-yellow-500" },
-              hard:   { label: "Hard",   color: "text-red-400",    bg: "bg-red-900/30    border-red-700/50",    active: "bg-red-900/50    border-red-500"   },
+              easy:   { label: "Easy",   color: "text-green-400",  bg: "bg-zinc-800 border-zinc-700", active: "bg-green-900/50 border-green-500 text-green-400" },
+              medium: { label: "Medium", color: "text-yellow-400", bg: "bg-zinc-800 border-zinc-700", active: "bg-yellow-900/50 border-yellow-500 text-yellow-400" },
+              hard:   { label: "Hard",   color: "text-red-400",    bg: "bg-zinc-800 border-zinc-700", active: "bg-red-900/50 border-red-500 text-red-400" },
             }[d];
             return (
               <button
@@ -156,8 +174,8 @@ export const PreferencesTab = ({
                 onClick={() => setDifficulty(d)}
                 className={`py-3 rounded-xl border text-sm font-medium transition-all ${
                   difficulty === d
-                    ? `${config.active} ${config.color}`
-                    : "bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-white"
+                    ? config.active
+                    : `${config.bg} text-zinc-400 hover:text-white`
                 }`}
               >
                 {config.label}
@@ -182,38 +200,46 @@ export const PreferencesTab = ({
               </div>
               <Toggle
                 enabled={quizToggles[setting.id as keyof typeof quizToggles]}
-                onChange={(v) =>
-                  setQuizToggles((prev) => ({ ...prev, [setting.id]: v }))
-                }
+                onChange={(v) => setQuizToggles((prev) => ({ ...prev, [setting.id]: v }))}
               />
             </div>
           ))}
         </div>
       </div>
 
-      {/* Appearance */}
+      {/* Appearance — FIXED with real state + theme application */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-4">
         <h2 className="text-lg font-semibold text-white flex items-center gap-2">
           <MdPalette className="text-[#FF8D28] size-5" />
           Appearance
         </h2>
         <div className="grid grid-cols-3 gap-3">
-          {[
-            { label: "Dark",   bg: "bg-zinc-950 border-zinc-700" },
-            { label: "Darker", bg: "bg-black border-zinc-800"    },
-            { label: "System", bg: "bg-gradient-to-br from-zinc-950 to-zinc-700 border-zinc-600" },
-          ].map((theme) => (
+          {([
+            { id: "dark"   as AppearanceTheme, label: "Dark",   bg: "bg-zinc-950 border-zinc-700" },
+            { id: "darker" as AppearanceTheme, label: "Darker", bg: "bg-black border-zinc-800"    },
+            { id: "system" as AppearanceTheme, label: "System", bg: "bg-gradient-to-br from-zinc-950 to-zinc-700 border-zinc-600" },
+          ]).map((theme) => (
             <button
-              key={theme.label}
-              className={`h-16 rounded-xl border-2 ${theme.bg} flex items-end p-2 hover:border-[#FF8D28]/50 transition`}
+              key={theme.id}
+              onClick={() => handleThemeChange(theme.id)}
+              className={`h-16 rounded-xl border-2 ${theme.bg} flex items-end p-2 transition-all ${
+                activeTheme === theme.id
+                  ? "border-[#FF8D28] ring-1 ring-[#FF8D28]/30"
+                  : "hover:border-[#FF8D28]/50"
+              }`}
             >
-              <span className="text-zinc-400 text-xs">{theme.label}</span>
+              <span className={`text-xs font-medium ${activeTheme === theme.id ? "text-[#FF8D28]" : "text-zinc-400"}`}>
+                {theme.label}
+              </span>
+              {activeTheme === theme.id && (
+                <span className="ml-auto text-[#FF8D28] text-xs">✓</span>
+              )}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Notifications */}
+      {/* Notifications — FIXED all toggles have real state */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-4">
         <h2 className="text-lg font-semibold text-white flex items-center gap-2">
           <MdNotifications className="text-[#FF8D28] size-5" />
@@ -230,14 +256,14 @@ export const PreferencesTab = ({
             {
               label: "Achievement Alerts",
               description: "Notify when you earn a new achievement",
-              enabled: true,
-              onChange: () => {},
+              enabled: achievementAlerts,
+              onChange: setAchievementAlerts,
             },
             {
               label: "Weekly Progress Report",
               description: "Summary of your weekly performance",
-              enabled: false,
-              onChange: () => {},
+              enabled: weeklyReport,
+              onChange: setWeeklyReport,
             },
           ].map((item, i) => (
             <div key={i} className="flex items-center justify-between py-1">

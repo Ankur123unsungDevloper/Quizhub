@@ -23,7 +23,11 @@ const subjectMap: Record<string, string[]> = {
 const years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i);
 
 type Props = {
-  user: { firstName?: string | null; lastName?: string | null; primaryEmailAddress?: { emailAddress: string } | null } | null | undefined;
+  user: {
+    firstName?: string | null;
+    lastName?: string | null;
+    primaryEmailAddress?: { emailAddress: string } | null;
+  } | null | undefined;
   preferredName: string; setPreferredName: (v: string) => void;
   educationType: EducationType; setEducationType: (v: EducationType) => void;
   studentClass: string; setStudentClass: (v: string) => void;
@@ -78,12 +82,14 @@ export const EducationTab = ({
             </Button>
           ) : (
             <>
-              <Button variant="outline" size="sm"
-                onClick={() => setIsEditing(false)}>
+              <Button variant="outline" size="sm" onClick={() => setIsEditing(false)}>
                 Cancel
               </Button>
-              <Button size="sm" onClick={onSave}
-                className="bg-[#FF8D28] hover:bg-[#ff8d28d9] text-white gap-2">
+              <Button
+                size="sm"
+                onClick={onSave}
+                className="bg-[#FF8D28] hover:bg-[#ff8d28d9] text-white gap-2"
+              >
                 <FaSave className="size-3.5" /> Save
               </Button>
             </>
@@ -91,44 +97,63 @@ export const EducationTab = ({
         </div>
       </div>
 
-      {/* Name Row */}
+      {/* Name Row — always readonly (from Clerk) */}
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <label className="text-zinc-400 text-sm">First Name</label>
-          <Input value={user?.firstName ?? ""} disabled
-            className="bg-zinc-800 border-zinc-700 text-zinc-400" />
+          <Input
+            value={user?.firstName ?? ""}
+            readOnly
+            className="bg-zinc-800 border-zinc-700 text-zinc-400 cursor-not-allowed"
+          />
         </div>
         <div className="space-y-2">
           <label className="text-zinc-400 text-sm">Last Name</label>
-          <Input value={user?.lastName ?? ""} disabled
-            className="bg-zinc-800 border-zinc-700 text-zinc-400" />
+          <Input
+            value={user?.lastName ?? ""}
+            readOnly
+            className="bg-zinc-800 border-zinc-700 text-zinc-400 cursor-not-allowed"
+          />
         </div>
       </div>
 
-      {/* Email */}
+      {/* Email — always readonly */}
       <div className="space-y-2">
         <label className="text-zinc-400 text-sm">Email</label>
-        <Input value={user?.primaryEmailAddress?.emailAddress ?? ""} disabled
-          className="bg-zinc-800 border-zinc-700 text-zinc-400" />
+        <Input
+          value={user?.primaryEmailAddress?.emailAddress ?? ""}
+          readOnly
+          className="bg-zinc-800 border-zinc-700 text-zinc-400 cursor-not-allowed"
+        />
       </div>
 
-      {/* Preferred Name */}
+      {/* Preferred Name — FIXED: readOnly when not editing, fully editable when editing */}
       <div className="space-y-2">
         <label className="text-zinc-400 text-sm">Preferred Name</label>
-        <Input value={preferredName} disabled={!isEditing}
+        <Input
+          value={preferredName}
+          readOnly={!isEditing}
           onChange={(e) => setPreferredName(e.target.value)}
           placeholder="What should we call you?"
-          className="bg-zinc-800 border-zinc-700 text-white disabled:text-zinc-400" />
+          className={`bg-zinc-800 border-zinc-700 text-white transition-all ${
+            isEditing
+              ? "border-zinc-600 focus:border-[#FF8D28] focus:ring-[#FF8D28]/20"
+              : "text-zinc-400 cursor-not-allowed"
+          }`}
+        />
       </div>
 
       {/* Education Type */}
       <div className="space-y-2">
         <label className="text-zinc-400 text-sm">Your Role</label>
-        <Select value={educationType} disabled={!isEditing}
+        <Select
+          value={educationType}
+          disabled={!isEditing}
           onValueChange={(v) => {
             setEducationType(v as EducationType);
             setStudentClass(""); setBranch(""); setExam("");
-          }}>
+          }}
+        >
           <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
             <SelectValue placeholder="Select education type" />
           </SelectTrigger>
@@ -144,8 +169,7 @@ export const EducationTab = ({
       {educationType === "school" && (
         <div className="space-y-2">
           <label className="text-zinc-400 text-sm">Class</label>
-          <Select value={studentClass} disabled={!isEditing}
-            onValueChange={setStudentClass}>
+          <Select value={studentClass} disabled={!isEditing} onValueChange={setStudentClass}>
             <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
               <SelectValue placeholder="Select class" />
             </SelectTrigger>
@@ -193,8 +217,11 @@ export const EducationTab = ({
       {/* Target Year */}
       <div className="space-y-2">
         <label className="text-zinc-400 text-sm">Target Year</label>
-        <Select value={targetYear?.toString()} disabled={!isEditing}
-          onValueChange={(v) => setTargetYear(Number(v))}>
+        <Select
+          value={targetYear?.toString()}
+          disabled={!isEditing}
+          onValueChange={(v) => setTargetYear(Number(v))}
+        >
           <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
             <SelectValue placeholder="Select year" />
           </SelectTrigger>
@@ -226,10 +253,10 @@ export const EducationTab = ({
         color="red"
       />
 
-      {/* Study Hours */}
+      {/* Study Hours — FIXED: not disabled by pointer-events but by the disabled prop */}
       <div className="space-y-2">
         <label className="text-zinc-400 text-sm">Daily Study Hours</label>
-        <div className={`flex justify-center py-4 ${!isEditing ? "opacity-50 pointer-events-none" : ""}`}>
+        <div className="flex justify-center py-4">
           <CircularSlider
             value={studyHours}
             onChange={setStudyHours}
