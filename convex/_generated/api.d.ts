@@ -25,6 +25,7 @@ import type * as imageFixHelpers from "../imageFixHelpers.js";
 import type * as paperExamHelpers from "../paperExamHelpers.js";
 import type * as paperExams from "../paperExams.js";
 import type * as questions from "../questions.js";
+import type * as subscriptions from "../subscriptions.js";
 import type * as userProfiles from "../userProfiles.js";
 import type * as users from "../users.js";
 
@@ -52,6 +53,7 @@ declare const fullApi: ApiFromModules<{
   paperExamHelpers: typeof paperExamHelpers;
   paperExams: typeof paperExams;
   questions: typeof questions;
+  subscriptions: typeof subscriptions;
   userProfiles: typeof userProfiles;
   users: typeof users;
 }>;

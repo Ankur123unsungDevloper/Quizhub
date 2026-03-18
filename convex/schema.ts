@@ -259,4 +259,64 @@ export default defineSchema({
     pageNumber: v.number(),
     text: v.string(),
   }).index("by_book", ["bookId"]),
+
+
+  subscriptions: defineTable({
+    userId: v.id("users"),
+    
+    // Razorpay identifiers
+    razorpaySubscriptionId: v.optional(v.string()),
+    razorpayCustomerId: v.optional(v.string()),
+    razorpayPaymentId: v.optional(v.string()),
+    
+    plan: v.union(
+      v.literal("basic"),    // ₹99/month
+      v.literal("pro"),      // ₹199/month  
+      v.literal("elite")     // ₹299/month
+    ),
+    
+    status: v.union(
+      v.literal("active"),
+      v.literal("expired"),
+      v.literal("cancelled"),
+      v.literal("pending")
+    ),
+    
+    startDate: v.number(),
+    endDate: v.number(),      // startDate + 30 days in ms
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_status", ["status"])
+    .index("by_razorpay", ["razorpaySubscriptionId"]),
+
+  premiumCards: defineTable({
+    topicId: v.id("topics"),
+    examId: v.id("exams"),
+    
+    // What makes this premium
+    title: v.string(),
+    description: v.string(),
+    
+    // Rich content (only visible to subscribers)
+    detailedNotes: v.optional(v.string()),
+    formulaSheet: v.optional(v.string()),
+    pyqCount: v.optional(v.number()),        // number of PYQs included
+    mockTestCount: v.optional(v.number()),   // number of mock tests
+    aiQuestionsCount: v.optional(v.number()), // AI generated questions
+    videoUrl: v.optional(v.string()),        // video explanation URL
+    
+    plan: v.union(
+      v.literal("basic"),
+      v.literal("pro"),
+      v.literal("elite")
+    ),
+    
+    imageUrl: v.optional(v.string()),
+    isActive: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("by_topic", ["topicId"])
+    .index("by_exam", ["examId"])
+    .index("by_plan", ["plan"]),
 });
