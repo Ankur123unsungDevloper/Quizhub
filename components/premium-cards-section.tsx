@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { Id } from "@/convex/_generated/dataModel";
 import { RiVipCrownFill } from "react-icons/ri";
 import { HiSparkles } from "react-icons/hi";
-import { FaLock, FaBookOpen, FaFlask, FaVideo, FaClipboardList, FaBrain } from "react-icons/fa";
+import { FaLock } from "react-icons/fa";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 
@@ -203,68 +203,6 @@ export const PremiumCardsSection = ({ examId }: Props) => {
                 )}
               </div>
 
-              {/* Card body */}
-              <div className="p-4 space-y-3">
-                <div>
-                  <h3 className="text-white font-semibold text-sm leading-tight">{card.title}</h3>
-                  <p className="text-zinc-400 text-xs mt-1 line-clamp-2">{card.description}</p>
-                </div>
-
-                {/* What's inside */}
-                <div className="grid grid-cols-2 gap-1.5">
-                  {card.detailedNotes && (
-                    <div className="flex items-center gap-1.5 text-xs text-zinc-400">
-                      <FaBookOpen className="size-3 text-yellow-400 shrink-0" />
-                      <span>Detailed Notes</span>
-                    </div>
-                  )}
-                  {card.formulaSheet && (
-                    <div className="flex items-center gap-1.5 text-xs text-zinc-400">
-                      <FaFlask className="size-3 text-yellow-400 shrink-0" />
-                      <span>Formula Sheet</span>
-                    </div>
-                  )}
-                  {card.pyqCount && card.pyqCount > 0 && (
-                    <div className="flex items-center gap-1.5 text-xs text-zinc-400">
-                      <FaClipboardList className="size-3 text-yellow-400 shrink-0" />
-                      <span>{card.pyqCount} PYQs</span>
-                    </div>
-                  )}
-                  {card.mockTestCount && card.mockTestCount > 0 && (
-                    <div className="flex items-center gap-1.5 text-xs text-zinc-400">
-                      <FaClipboardList className="size-3 text-yellow-400 shrink-0" />
-                      <span>{card.mockTestCount} Mock Tests</span>
-                    </div>
-                  )}
-                  {card.aiQuestionsCount && card.aiQuestionsCount > 0 && (
-                    <div className="flex items-center gap-1.5 text-xs text-zinc-400">
-                      <FaBrain className="size-3 text-yellow-400 shrink-0" />
-                      <span>{card.aiQuestionsCount} AI Qs</span>
-                    </div>
-                  )}
-                  {card.videoUrl && (
-                    <div className="flex items-center gap-1.5 text-xs text-zinc-400">
-                      <FaVideo className="size-3 text-yellow-400 shrink-0" />
-                      <span>Video</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* CTA button */}
-                <button className={cn(
-                  "w-full py-2 rounded-xl text-xs font-bold transition-all duration-200",
-                  accessible
-                    ? `bg-linear-to-r ${config.gradient} text-black hover:opacity-90`
-                    : "bg-yellow-400/10 border border-yellow-400/30 text-yellow-400 hover:bg-yellow-400/20"
-                )}>
-                  {!user
-                    ? "Sign in to Access"
-                    : accessible
-                    ? "Start Learning →"
-                    : `Unlock with ${config.label} →`
-                  }
-                </button>
-              </div>
             </div>
           );
         })}
