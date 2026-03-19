@@ -1,10 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import Razorpay from "razorpay";
-
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID!,
-  key_secret: process.env.RAZORPAY_KEY_SECRET!,
-});
 
 // Plan prices in paise (₹ × 100)
 const PLAN_PRICES = {
@@ -14,12 +8,30 @@ const PLAN_PRICES = {
 };
 
 export async function POST(req: NextRequest) {
+  // ✅ Check keys first — return mock response if not configured yet
+  if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+    return NextResponse.json(
+      { error: "Payment gateway not configured yet. Please try again later." },
+      { status: 503 }
+    );
+  }
+
   try {
-    const { plan, userId } = await req.json();
+    const { plan, userId } = await req.json() as {
+      plan: string;
+      userId: string;
+    };
 
     if (!plan || !PLAN_PRICES[plan as keyof typeof PLAN_PRICES]) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
     }
+
+    // ✅ Import and initialize Razorpay INSIDE the handler — never at module level
+    const Razorpay = (await import("razorpay")).default;
+    const razorpay = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET,
+    });
 
     const order = await razorpay.orders.create({
       amount: PLAN_PRICES[plan as keyof typeof PLAN_PRICES],
