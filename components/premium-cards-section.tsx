@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useQuery } from "convex/react";
@@ -9,7 +10,6 @@ import { RiVipCrownFill } from "react-icons/ri";
 import { HiSparkles } from "react-icons/hi";
 import { FaLock } from "react-icons/fa";
 import { cn } from "@/lib/utils";
-import Image from "next/image";
 
 type Props = {
   examId?: Id<"exams">;
@@ -176,12 +176,11 @@ export const PremiumCardsSection = ({ examId }: Props) => {
               )}
 
               {/* Card image / placeholder */}
-              <div className="relative h-36 overflow-hidden">
+              <div className="relative h-70 overflow-hidden">
                 {card.imageUrl ? (
-                  <Image
+                  <img
                     src={card.imageUrl}
                     alt={card.title}
-                    fill
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                 ) : (
