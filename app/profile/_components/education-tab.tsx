@@ -4,23 +4,9 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select, SelectTrigger, SelectContent,
-  SelectItem, SelectValue,
-} from "@/components/ui/select";
 import { FaEdit, FaSave } from "react-icons/fa";
-import { SubjectInput } from "./subject-input";
-import { CircularSlider } from "./circular-slider";
 
 type EducationType = "school" | "college" | "competitive" | "";
-
-const subjectMap: Record<string, string[]> = {
-  school: ["Math", "Physics", "Chemistry", "Biology", "English"],
-  college: ["Programming", "DSA", "Database", "Operating System", "Networks"],
-  competitive: ["Math", "Physics", "Chemistry", "Reasoning", "GK"],
-};
-
-const years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i);
 
 type Props = {
   user: {
@@ -49,13 +35,41 @@ type Props = {
   handleSave: () => Promise<void>;
 };
 
-// Static display when not editing
-const ReadField = ({ label, value }: { label: string; value?: string }) => (
-  <div className="space-y-1.5">
-    <p className="text-zinc-400 text-xs uppercase tracking-wider">{label}</p>
-    <div className="px-3 py-2.5 rounded-lg bg-zinc-800/60 border border-zinc-700/50 text-sm min-h-10 flex items-center text-zinc-400">
-      {value || <span className="text-zinc-600 italic">Not set</span>}
-    </div>
+// Simple label + value display row
+const InfoRow = ({ label, value }: { label: string; value?: string }) => (
+  <div className="flex items-center justify-between py-3 border-b border-zinc-800 last:border-0">
+    <span className="text-zinc-500 text-sm">{label}</span>
+    <span className="text-white text-sm font-medium">
+      {value || <span className="text-zinc-600 italic text-xs">Not set</span>}
+    </span>
+  </div>
+);
+
+// Simple select pill group
+const PillSelect = ({
+  options,
+  value,
+  onChange,
+}: {
+  options: { label: string; value: string }[];
+  value: string;
+  onChange: (v: string) => void;
+}) => (
+  <div className="flex flex-wrap gap-2">
+    {options.map((o) => (
+      <button
+        key={o.value}
+        onClick={() => onChange(o.value)}
+        className={`px-4 py-2 rounded-full text-sm border transition-all ${
+          value === o.value
+            ? "bg-[#FF8D28]/10 border-[#FF8D28]/50 text-[#FF8D28] font-medium"
+            : "bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500"
+        }`}
+      >
+        {o.label}
+        {value === o.value && " ✓"}
+      </button>
+    ))}
   </div>
 );
 
@@ -89,182 +103,224 @@ export const EducationTab = ({
     }
   };
 
+  const eduLabel = {
+    school: "School Student",
+    college: "College Student",
+    competitive: "Competitive Exam",
+    "": "",
+  }[educationType];
+
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-6">
+    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
 
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-white">Education Details</h2>
-        <div className="flex gap-2">
-          {!isEditing ? (
-            <Button onClick={() => setIsEditing(true)} size="sm"
-              className="bg-zinc-800 hover:bg-zinc-700 text-white gap-2">
-              <FaEdit className="size-3.5" /> Edit
+      <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800">
+        <h2 className="text-white font-semibold">Education Details</h2>
+        {!isEditing ? (
+          <Button
+            size="sm"
+            onClick={() => setIsEditing(true)}
+            className="bg-zinc-800 hover:bg-zinc-700 text-white gap-1.5 h-8"
+          >
+            <FaEdit className="size-3" /> Edit
+          </Button>
+        ) : (
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setIsEditing(false)}
+              className="border-zinc-700 text-zinc-300 h-8"
+            >
+              Cancel
             </Button>
-          ) : (
-            <>
-              <Button variant="outline" size="sm"
-                onClick={() => setIsEditing(false)}
-                className="border-zinc-700 text-zinc-300">
-                Cancel
-              </Button>
-              <Button size="sm" onClick={onSave} disabled={saving}
-                className="bg-[#FF8D28] hover:bg-[#ff8d28d9] text-white gap-2">
-                <FaSave className="size-3.5" />
-                {saving ? "Saving..." : "Save"}
-              </Button>
-            </>
-          )}
-        </div>
+            <Button
+              size="sm"
+              onClick={onSave}
+              disabled={saving}
+              className="bg-[#FF8D28] hover:bg-[#ff8d28d9] text-white gap-1.5 h-8"
+            >
+              <FaSave className="size-3" />
+              {saving ? "Saving..." : "Save"}
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* ── READ MODE ─────────────────────────────────────────────────────── */}
       {!isEditing && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <ReadField label="First Name" value={user?.firstName ?? ""} />
-            <ReadField label="Last Name" value={user?.lastName ?? ""} />
-          </div>
-          <ReadField label="Email" value={user?.primaryEmailAddress?.emailAddress} />
-          <ReadField label="Preferred Name" value={preferredName} />
-          <ReadField label="Education Type" value={
-            educationType === "school" ? "School Student"
-            : educationType === "college" ? "College Student"
-            : educationType === "competitive" ? "Competitive Exam" : ""
-          } />
-          {educationType === "school" && <ReadField label="Class" value={studentClass ? `Class ${studentClass}` : ""} />}
-          {educationType === "college" && <ReadField label="Branch" value={branch} />}
-          {educationType === "competitive" && <ReadField label="Target Exam" value={exam} />}
-          <ReadField label="Target Year" value={targetYear?.toString()} />
-          <div className="space-y-1.5">
-            <p className="text-zinc-400 text-xs uppercase tracking-wider">Strong Subjects</p>
-            <div className="flex flex-wrap gap-2 px-3 py-2.5 bg-zinc-800/60 border border-zinc-700/50 rounded-lg min-h-10">
-              {strongSubjects.length > 0
-                ? strongSubjects.map(s => <span key={s} className="text-xs px-2.5 py-1 rounded-full bg-green-900/50 text-green-300 border border-green-700/50">{s}</span>)
-                : <span className="text-zinc-600 italic text-sm">Not set</span>}
-            </div>
-          </div>
-          <div className="space-y-1.5">
-            <p className="text-zinc-400 text-xs uppercase tracking-wider">Weak Subjects</p>
-            <div className="flex flex-wrap gap-2 px-3 py-2.5 bg-zinc-800/60 border border-zinc-700/50 rounded-lg min-h-10">
-              {weakSubjects.length > 0
-                ? weakSubjects.map(s => <span key={s} className="text-xs px-2.5 py-1 rounded-full bg-red-900/50 text-red-300 border border-red-700/50">{s}</span>)
-                : <span className="text-zinc-600 italic text-sm">Not set</span>}
-            </div>
-          </div>
-          <ReadField label="Daily Study Hours" value={`${studyHours} ${studyHours === 1 ? "hour" : "hours"} / day`} />
+        <div className="px-6 py-2">
+          <InfoRow label="First Name"      value={user?.firstName ?? ""} />
+          <InfoRow label="Last Name"       value={user?.lastName ?? ""} />
+          <InfoRow label="Email"           value={user?.primaryEmailAddress?.emailAddress} />
+          <InfoRow label="Preferred Name"  value={preferredName} />
+          <InfoRow label="Education Type"  value={eduLabel} />
+          {educationType === "school"      && <InfoRow label="Class"       value={studentClass ? `Class ${studentClass}` : ""} />}
+          {educationType === "college"     && <InfoRow label="Branch"      value={branch} />}
+          {educationType === "competitive" && <InfoRow label="Target Exam" value={exam} />}
+          <InfoRow label="Target Year"     value={targetYear?.toString()} />
+          <InfoRow
+            label="Strong Subjects"
+            value={strongSubjects.length > 0 ? strongSubjects.join(", ") : ""}
+          />
+          <InfoRow
+            label="Weak Subjects"
+            value={weakSubjects.length > 0 ? weakSubjects.join(", ") : ""}
+          />
+          <InfoRow label="Daily Study Hours" value={studyHours ? `${studyHours} hours` : ""} />
         </div>
       )}
 
-      {/* ── EDIT MODE — zero disabled props ───────────────────────────────── */}
+      {/* ── EDIT MODE ─────────────────────────────────────────────────────── */}
       {isEditing && (
-        <div className="space-y-5">
-          {/* Clerk fields — always read only */}
-          <div className="grid grid-cols-2 gap-4">
-            <ReadField label="First Name" value={user?.firstName ?? ""} />
-            <ReadField label="Last Name" value={user?.lastName ?? ""} />
-          </div>
-          <ReadField label="Email" value={user?.primaryEmailAddress?.emailAddress} />
+        <div className="px-6 py-5 space-y-5">
 
-          {/* Preferred Name */}
+          {/* Read-only fields from Clerk */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-zinc-500 text-xs">First Name</label>
+              <div className="px-3 py-2.5 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-400 text-sm">
+                {user?.firstName || "—"}
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-zinc-500 text-xs">Last Name</label>
+              <div className="px-3 py-2.5 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-400 text-sm">
+                {user?.lastName || "—"}
+              </div>
+            </div>
+          </div>
+
+          {/* Preferred name */}
           <div className="space-y-1.5">
-            <label className="text-zinc-400 text-xs uppercase tracking-wider">Preferred Name</label>
+            <label className="text-zinc-400 text-xs">Preferred Name</label>
             <Input
               value={preferredName}
               onChange={(e) => setPreferredName(e.target.value)}
               placeholder="What should we call you?"
-              className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 focus-visible:ring-[#FF8D28]"
+              className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-600 focus-visible:ring-[#FF8D28] h-10"
             />
           </div>
 
-          {/* Education Type */}
-          <div className="space-y-1.5">
-            <label className="text-zinc-400 text-xs uppercase tracking-wider">Education Type</label>
-            <Select value={educationType} onValueChange={(v) => {
-              setEducationType(v as EducationType);
-              setStudentClass(""); setBranch(""); setExam("");
-            }}>
-              <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
-                <SelectValue placeholder="Select education type" />
-              </SelectTrigger>
-              <SelectContent className="bg-zinc-800 border-zinc-700">
-                <SelectItem value="school">School Student</SelectItem>
-                <SelectItem value="college">College Student</SelectItem>
-                <SelectItem value="competitive">Competitive Exam</SelectItem>
-              </SelectContent>
-            </Select>
+          {/* Education type */}
+          <div className="space-y-2">
+            <label className="text-zinc-400 text-xs">Education Type</label>
+            <PillSelect
+              value={educationType}
+              onChange={(v) => {
+                setEducationType(v as EducationType);
+                setStudentClass(""); setBranch(""); setExam("");
+              }}
+              options={[
+                { label: "School",      value: "school"      },
+                { label: "College",     value: "college"     },
+                { label: "Competitive", value: "competitive" },
+              ]}
+            />
           </div>
 
+          {/* Dynamic field */}
           {educationType === "school" && (
-            <div className="space-y-1.5">
-              <label className="text-zinc-400 text-xs uppercase tracking-wider">Class</label>
-              <Select value={studentClass} onValueChange={setStudentClass}>
-                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
-                  <SelectValue placeholder="Select class" />
-                </SelectTrigger>
-                <SelectContent className="bg-zinc-800 border-zinc-700">
-                  {["9","10","11","12"].map(c => <SelectItem key={c} value={c}>Class {c}</SelectItem>)}
-                </SelectContent>
-              </Select>
+            <div className="space-y-2">
+              <label className="text-zinc-400 text-xs">Class</label>
+              <PillSelect
+                value={studentClass}
+                onChange={setStudentClass}
+                options={["9","10","11","12"].map(c => ({ label: `Class ${c}`, value: c }))}
+              />
             </div>
           )}
 
           {educationType === "college" && (
-            <div className="space-y-1.5">
-              <label className="text-zinc-400 text-xs uppercase tracking-wider">Branch</label>
-              <Select value={branch} onValueChange={setBranch}>
-                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
-                  <SelectValue placeholder="Select branch" />
-                </SelectTrigger>
-                <SelectContent className="bg-zinc-800 border-zinc-700">
-                  {["Engineering","Medical","Computer Science","Management","Arts"].map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
-                </SelectContent>
-              </Select>
+            <div className="space-y-2">
+              <label className="text-zinc-400 text-xs">Branch</label>
+              <PillSelect
+                value={branch}
+                onChange={setBranch}
+                options={["Engineering","Medical","Computer Science","Management","Arts"]
+                  .map(b => ({ label: b, value: b }))}
+              />
             </div>
           )}
 
           {educationType === "competitive" && (
-            <div className="space-y-1.5">
-              <label className="text-zinc-400 text-xs uppercase tracking-wider">Target Exam</label>
-              <Select value={exam} onValueChange={setExam}>
-                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
-                  <SelectValue placeholder="Select exam" />
-                </SelectTrigger>
-                <SelectContent className="bg-zinc-800 border-zinc-700">
-                  {["JEE","NEET","GATE","CAT","UPSC","Other"].map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
-                </SelectContent>
-              </Select>
+            <div className="space-y-2">
+              <label className="text-zinc-400 text-xs">Target Exam</label>
+              <PillSelect
+                value={exam}
+                onChange={setExam}
+                options={["JEE","NEET","GATE","CAT","UPSC","Other"]
+                  .map(e => ({ label: e, value: e }))}
+              />
             </div>
           )}
 
-          {/* Target Year */}
-          <div className="space-y-1.5">
-            <label className="text-zinc-400 text-xs uppercase tracking-wider">Target Year</label>
-            <Select value={targetYear?.toString()} onValueChange={(v) => setTargetYear(Number(v))}>
-              <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
-                <SelectValue placeholder="Select year" />
-              </SelectTrigger>
-              <SelectContent className="bg-zinc-800 border-zinc-700">
-                {years.map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}
-              </SelectContent>
-            </Select>
+          {/* Target year */}
+          <div className="space-y-2">
+            <label className="text-zinc-400 text-xs">Target Year</label>
+            <PillSelect
+              value={targetYear?.toString() ?? ""}
+              onChange={(v) => setTargetYear(Number(v))}
+              options={Array.from({ length: 6 }, (_, i) => {
+                const y = new Date().getFullYear() + i;
+                return { label: String(y), value: String(y) };
+              })}
+            />
           </div>
 
-          {/* Subjects */}
-          <SubjectInput label="Strong Subjects" selected={strongSubjects}
-            onChange={setStrongSubjects} options={subjectMap[educationType] ?? []}
-            disabled={false} color="green" />
-
-          <SubjectInput label="Weak Subjects" selected={weakSubjects}
-            onChange={setWeakSubjects} options={subjectMap[educationType] ?? []}
-            disabled={false} color="red" />
-
-          {/* Study Hours */}
+          {/* Strong subjects — simple text input */}
           <div className="space-y-1.5">
-            <label className="text-zinc-400 text-xs uppercase tracking-wider">Daily Study Hours</label>
-            <div className="flex justify-center py-4">
-              <CircularSlider value={studyHours} onChange={setStudyHours} min={1} max={12} size={180} />
+            <label className="text-zinc-400 text-xs">
+              Strong Subjects <span className="text-zinc-600">(comma separated)</span>
+            </label>
+            <Input
+              value={strongSubjects.join(", ")}
+              onChange={(e) =>
+                setStrongSubjects(
+                  e.target.value.split(",").map(s => s.trim()).filter(Boolean)
+                )
+              }
+              placeholder="e.g. Math, Physics, Chemistry"
+              className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-600 focus-visible:ring-[#FF8D28] h-10"
+            />
+          </div>
+
+          {/* Weak subjects */}
+          <div className="space-y-1.5">
+            <label className="text-zinc-400 text-xs">
+              Weak Subjects <span className="text-zinc-600">(comma separated)</span>
+            </label>
+            <Input
+              value={weakSubjects.join(", ")}
+              onChange={(e) =>
+                setWeakSubjects(
+                  e.target.value.split(",").map(s => s.trim()).filter(Boolean)
+                )
+              }
+              placeholder="e.g. Organic Chemistry, Calculus"
+              className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-600 focus-visible:ring-[#FF8D28] h-10"
+            />
+          </div>
+
+          {/* Study hours — simple number buttons */}
+          <div className="space-y-2">
+            <label className="text-zinc-400 text-xs">Daily Study Hours</label>
+            <div className="flex flex-wrap gap-2">
+              {[1,2,3,4,5,6,7,8,9,10,11,12].map(h => (
+                <button
+                  key={h}
+                  onClick={() => setStudyHours(h)}
+                  className={`w-10 h-10 rounded-xl text-sm font-medium border transition-all ${
+                    studyHours === h
+                      ? "bg-[#FF8D28] border-[#FF8D28] text-black font-bold"
+                      : "bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500"
+                  }`}
+                >
+                  {h}
+                </button>
+              ))}
             </div>
+            <p className="text-zinc-600 text-xs">{studyHours} {studyHours === 1 ? "hour" : "hours"} / day selected</p>
           </div>
         </div>
       )}
