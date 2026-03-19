@@ -23,13 +23,13 @@ export const PremiumCardsSection = ({ examId }: Props) => {
     <div className="mt-12 space-y-4">
       {/* Section divider */}
       <div className="flex items-center gap-4">
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-yellow-500/30 to-transparent" />
+        <div className="flex-1 h-px bg-linear-to-r from-transparent via-yellow-500/30 to-transparent" />
         <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-yellow-500/10 border border-yellow-500/20">
           <RiVipCrownFill className="size-4 text-yellow-400" />
           <span className="text-yellow-400 text-sm font-semibold">Premium Content</span>
           <HiSparkles className="size-4 text-yellow-400" />
         </div>
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-yellow-500/30 to-transparent" />
+        <div className="flex-1 h-px bg-linear-to-r from-transparent via-yellow-500/30 to-transparent" />
       </div>
 
       <p className="text-center text-zinc-500 text-sm">

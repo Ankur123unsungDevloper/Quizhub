@@ -231,7 +231,7 @@ export default function SubscriptionPage() {
           </div>
           <h1 className="text-4xl md:text-5xl font-bold text-white">
             Go beyond free.<br />
-            <span className="bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
+            <span className="bg-linear-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
               Master every topic.
             </span>
           </h1>
@@ -341,7 +341,7 @@ export default function SubscriptionPage() {
                     w-full py-3 rounded-xl font-bold text-sm transition-all duration-200
                     ${subscription?.plan === plan.id
                       ? "bg-green-900/30 border border-green-700/50 text-green-400 cursor-default"
-                      : `bg-gradient-to-r ${plan.color} text-black hover:opacity-90 hover:scale-[1.02] active:scale-100`
+                      : `bg-linear-to-r ${plan.color} text-black hover:opacity-90 hover:scale-[1.02] active:scale-100`
                     }
                     disabled:opacity-60 disabled:cursor-not-allowed
                   `}

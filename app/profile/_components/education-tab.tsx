@@ -53,7 +53,7 @@ type Props = {
 const ReadField = ({ label, value }: { label: string; value?: string }) => (
   <div className="space-y-1.5">
     <p className="text-zinc-400 text-xs uppercase tracking-wider">{label}</p>
-    <div className="px-3 py-2.5 rounded-lg bg-zinc-800/60 border border-zinc-700/50 text-sm min-h-[40px] flex items-center text-zinc-400">
+    <div className="px-3 py-2.5 rounded-lg bg-zinc-800/60 border border-zinc-700/50 text-sm min-h-10 flex items-center text-zinc-400">
       {value || <span className="text-zinc-600 italic">Not set</span>}
     </div>
   </div>
@@ -138,7 +138,7 @@ export const EducationTab = ({
           <ReadField label="Target Year" value={targetYear?.toString()} />
           <div className="space-y-1.5">
             <p className="text-zinc-400 text-xs uppercase tracking-wider">Strong Subjects</p>
-            <div className="flex flex-wrap gap-2 px-3 py-2.5 bg-zinc-800/60 border border-zinc-700/50 rounded-lg min-h-[40px]">
+            <div className="flex flex-wrap gap-2 px-3 py-2.5 bg-zinc-800/60 border border-zinc-700/50 rounded-lg min-h-10">
               {strongSubjects.length > 0
                 ? strongSubjects.map(s => <span key={s} className="text-xs px-2.5 py-1 rounded-full bg-green-900/50 text-green-300 border border-green-700/50">{s}</span>)
                 : <span className="text-zinc-600 italic text-sm">Not set</span>}
@@ -146,7 +146,7 @@ export const EducationTab = ({
           </div>
           <div className="space-y-1.5">
             <p className="text-zinc-400 text-xs uppercase tracking-wider">Weak Subjects</p>
-            <div className="flex flex-wrap gap-2 px-3 py-2.5 bg-zinc-800/60 border border-zinc-700/50 rounded-lg min-h-[40px]">
+            <div className="flex flex-wrap gap-2 px-3 py-2.5 bg-zinc-800/60 border border-zinc-700/50 rounded-lg min-h-10">
               {weakSubjects.length > 0
                 ? weakSubjects.map(s => <span key={s} className="text-xs px-2.5 py-1 rounded-full bg-red-900/50 text-red-300 border border-red-700/50">{s}</span>)
                 : <span className="text-zinc-600 italic text-sm">Not set</span>}

@@ -24,6 +24,7 @@ import Footer from "../(platform)/footer/footer";
 import Navbar from "../(platform)/navbar/navbar";
 import Topbar from "./_components/topbar";
 import { QuizPagination } from "@/components/quiz-pagination";
+import { PremiumCardsSection } from "@/components/premium-cards-section";
 
 import { FaEye } from "react-icons/fa";
 import { BsThreeDotsVertical } from "react-icons/bs";
@@ -54,10 +55,10 @@ type RawTopic = {
 };
 
 type CardEntry = {
-  id: string;             // unique key: topicId + "-quiz" | "-exam"
+  id: string;
   topicId: Id<"topics">;
   name: string;
-  description: string;    // mode-specific description
+  description: string;
   imageUrl?: string;
   viewCount?: number;
   mode: "quiz" | "exam";
@@ -76,7 +77,6 @@ function seededShuffle<T>(array: T[], seed: number): T[] {
   return arr;
 }
 
-// Build mode-aware description
 function quizDescription(name: string, original?: string): string {
   if (original) return `Quick quiz: ${original}`;
   return `Solve quick MCQs on ${name} to build your understanding and test your basics.`;
@@ -95,7 +95,6 @@ const QuizzespageContent = () => {
 
   const shuffleSeed = useMemo(() => Date.now(), []);
 
-  // ── Convex queries ──
   const dbUser = useQuery(api.users.getUserByClerkId, user ? { clerkId: user.id } : "skip");
   const profile = useQuery(api.userProfiles.getProfileByUserId, dbUser ? { userId: dbUser._id } : "skip");
   const allExams = useQuery(api.admin.getAllExams);
@@ -120,7 +119,10 @@ const QuizzespageContent = () => {
 
   const allTopics: RawTopic[] = (examTopics ?? fallbackTopics ?? []) as never;
 
-  // ── Build two cards per topic, then shuffle the full list ──
+  // ✅ Derive the active examId for PremiumCardsSection
+  const activeExamId: Id<"exams"> | undefined =
+    targetExam?._id ?? (allExams && allExams.length > 0 ? allExams[0]._id : undefined);
+
   const allCards: CardEntry[] = useMemo(() => {
     if (allTopics.length === 0) return [];
     const entries: CardEntry[] = [];
@@ -199,7 +201,6 @@ const QuizzespageContent = () => {
                 href={card.href}
                 className="block hover:bg-zinc-900 p-2 rounded-xl transition duration-200"
               >
-                {/* Image */}
                 <Card className={`bg-zinc-900 border-zinc-800 -py-6 overflow-hidden transition duration-200 ${
                   card.mode === "quiz" ? "hover:border-[#FF8D28]" : "hover:border-[#FF8D28]"
                 }`}>
@@ -230,9 +231,7 @@ const QuizzespageContent = () => {
                   </CardContent>
                 </Card>
 
-                {/* Card Info */}
                 <div className="flex flex-col py-2 px-1">
-                  {/* Name + view count */}
                   <div className="flex items-center justify-between w-full">
                     <span className="text-xs px-2 py-1 rounded-full capitalize text-zinc-500 hover:text-white">
                       {card.name}
@@ -243,7 +242,6 @@ const QuizzespageContent = () => {
                     </div>
                   </div>
 
-                  {/* Description + dropdown */}
                   <div className="flex items-start gap-x-2 mt-4">
                     <p className="flex-1 text-xs text-zinc-500 leading-relaxed line-clamp-2">
                       {card.description}
@@ -279,6 +277,11 @@ const QuizzespageContent = () => {
               </Link>
             ))}
           </div>
+        )}
+
+        {/* ✅ Premium cards at bottom — uses activeExamId derived from existing data */}
+        {!isLoading && (
+          <PremiumCardsSection examId={activeExamId} />
         )}
       </div>
 
