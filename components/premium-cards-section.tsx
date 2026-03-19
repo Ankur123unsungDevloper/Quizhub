@@ -2,25 +2,123 @@
 
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 import { Id } from "@/convex/_generated/dataModel";
-import { PremiumCard } from "@/components/premium-card";
 import { RiVipCrownFill } from "react-icons/ri";
 import { HiSparkles } from "react-icons/hi";
+import { FaLock, FaBookOpen, FaFlask, FaVideo, FaClipboardList, FaBrain } from "react-icons/fa";
+import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 type Props = {
   examId?: Id<"exams">;
 };
 
+// ── Fallback mock cards so section is ALWAYS visible ──────────────────────
+// Replace with real Convex data once you add premium cards via admin
+const MOCK_PREMIUM_CARDS = [
+  {
+    _id: "mock-1" as Id<"premiumCards">,
+    title: "JEE Physics — Mechanics Complete Pack",
+    description: "Master all mechanics topics with PYQs, formula sheets, AI questions and video explanations.",
+    plan: "basic" as const,
+    imageUrl: undefined,
+    pyqCount: 120,
+    mockTestCount: 5,
+    aiQuestionsCount: 200,
+    videoUrl: "https://example.com",
+    detailedNotes: "yes",
+    formulaSheet: "yes",
+    isActive: true,
+  },
+  {
+    _id: "mock-2" as Id<"premiumCards">,
+    title: "NEET Biology — Cell Biology & Genetics",
+    description: "3D cell models, detailed notes, 150+ PYQs and unlimited AI-generated practice questions.",
+    plan: "pro" as const,
+    imageUrl: undefined,
+    pyqCount: 150,
+    mockTestCount: 8,
+    aiQuestionsCount: 300,
+    videoUrl: "https://example.com",
+    detailedNotes: "yes",
+    formulaSheet: "yes",
+    isActive: true,
+  },
+  {
+    _id: "mock-3" as Id<"premiumCards">,
+    title: "JEE Chemistry — Organic Chemistry Elite",
+    description: "3D molecular models, reaction mechanisms, 200+ PYQs, mock tests and personal AI tutor.",
+    plan: "elite" as const,
+    imageUrl: undefined,
+    pyqCount: 200,
+    mockTestCount: 12,
+    aiQuestionsCount: 500,
+    videoUrl: "https://example.com",
+    detailedNotes: "yes",
+    formulaSheet: "yes",
+    isActive: true,
+  },
+];
+
+const planConfig = {
+  basic:  { label: "Basic",  gradient: "from-zinc-400 to-zinc-300",    glow: "shadow-zinc-400/10",   border: "border-zinc-600/30 hover:border-zinc-400/50"   },
+  pro:    { label: "Pro",    gradient: "from-yellow-400 to-amber-300",  glow: "shadow-yellow-400/15", border: "border-yellow-600/30 hover:border-yellow-400/50" },
+  elite:  { label: "Elite",  gradient: "from-yellow-300 to-orange-400", glow: "shadow-orange-400/15", border: "border-orange-600/30 hover:border-orange-400/50" },
+};
+
+const planAccess = {
+  basic:  ["basic", "pro", "elite"],
+  pro:    ["pro", "elite"],
+  elite:  ["elite"],
+};
+
 export const PremiumCardsSection = ({ examId }: Props) => {
-  const cards = useQuery(api.subscriptions.getPremiumCards, {
+  const { user } = useUser();
+  const router = useRouter();
+
+  const dbUser = useQuery(
+    api.users.getUserByClerkId,
+    user ? { clerkId: user.id } : "skip"
+  );
+
+  const subscription = useQuery(
+    api.subscriptions.getUserSubscription,
+    dbUser ? { userId: dbUser._id } : "skip"
+  );
+
+  // Try real cards first, fall back to mock
+  const realCards = useQuery(api.subscriptions.getPremiumCards, {
     examId,
     limit: 3,
   });
 
-  if (!cards || cards.length === 0) return null;
+  const cards = (realCards && realCards.length > 0) ? realCards : MOCK_PREMIUM_CARDS;
+
+  const userPlan = subscription?.status === "active" ? subscription.plan : null;
+
+  const hasAccess = (cardPlan: "basic" | "pro" | "elite") => {
+    if (!userPlan) return false;
+    return planAccess[cardPlan]?.includes(userPlan) ?? false;
+  };
+
+  const handleCardClick = (card: typeof cards[0]) => {
+    const accessible = hasAccess(card.plan);
+    if (!user) {
+      router.push("/sign-in");
+      return;
+    }
+    if (!accessible) {
+      router.push(`/subscription?highlight=${card.plan}`);
+      return;
+    }
+    // Access granted — navigate to premium content
+    router.push(`/premium/${card._id}`);
+  };
 
   return (
-    <div className="mt-12 space-y-4">
+    <div className="mt-12 w-full space-y-5">
       {/* Section divider */}
       <div className="flex items-center gap-4">
         <div className="flex-1 h-px bg-linear-to-r from-transparent via-yellow-500/30 to-transparent" />
@@ -33,14 +131,143 @@ export const PremiumCardsSection = ({ examId }: Props) => {
       </div>
 
       <p className="text-center text-zinc-500 text-sm">
-        Unlock exclusive content crafted by experts — go beyond free quizzes
+        Unlock expert content — go beyond free quizzes and score higher
       </p>
 
-      {/* Premium cards grid — max 3 */}
+      {/* Cards — always visible, locked or unlocked */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {cards.map((card) => (
-          <PremiumCard key={card._id} card={card} />
-        ))}
+        {cards.map((card) => {
+          const accessible = hasAccess(card.plan);
+          const config = planConfig[card.plan];
+
+          return (
+            <div
+              key={card._id}
+              onClick={() => handleCardClick(card)}
+              className={cn(
+                "relative group cursor-pointer rounded-2xl overflow-hidden",
+                "bg-linear-to-br from-zinc-900 to-zinc-950",
+                "border transition-all duration-300 hover:-translate-y-1",
+                `shadow-lg ${config.glow} hover:shadow-xl`,
+                config.border
+              )}
+            >
+              {/* Golden shimmer top border */}
+              <div className="absolute top-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-yellow-400/60 to-transparent" />
+
+              {/* Plan badge — top right */}
+              <div className="absolute top-3 right-3 z-10">
+                <div className={cn(
+                  "flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold text-black shadow-md",
+                  `bg-linear-to-r ${config.gradient}`
+                )}>
+                  <RiVipCrownFill className="size-3" />
+                  {config.label}
+                </div>
+              </div>
+
+              {/* Access indicator — top left */}
+              {accessible && (
+                <div className="absolute top-3 left-3 z-10">
+                  <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold bg-green-500 text-white">
+                    ✓ Unlocked
+                  </div>
+                </div>
+              )}
+
+              {/* Card image / placeholder */}
+              <div className="relative h-36 overflow-hidden">
+                {card.imageUrl ? (
+                  <Image
+                    src={card.imageUrl}
+                    alt={card.title}
+                    fill
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-linear-to-br from-yellow-900/30 to-zinc-900 flex items-center justify-center">
+                    <HiSparkles className="size-12 text-yellow-400/30" />
+                  </div>
+                )}
+
+                {/* Lock overlay — only for non-subscribers */}
+                {!accessible && (
+                  <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px] flex items-center justify-center">
+                    <div className="flex flex-col items-center gap-1">
+                      <FaLock className="size-5 text-yellow-400" />
+                      <span className="text-yellow-400 text-xs font-semibold">
+                        {!user ? "Sign in to access" : `Requires ${config.label} plan`}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Card body */}
+              <div className="p-4 space-y-3">
+                <div>
+                  <h3 className="text-white font-semibold text-sm leading-tight">{card.title}</h3>
+                  <p className="text-zinc-400 text-xs mt-1 line-clamp-2">{card.description}</p>
+                </div>
+
+                {/* What's inside */}
+                <div className="grid grid-cols-2 gap-1.5">
+                  {card.detailedNotes && (
+                    <div className="flex items-center gap-1.5 text-xs text-zinc-400">
+                      <FaBookOpen className="size-3 text-yellow-400 shrink-0" />
+                      <span>Detailed Notes</span>
+                    </div>
+                  )}
+                  {card.formulaSheet && (
+                    <div className="flex items-center gap-1.5 text-xs text-zinc-400">
+                      <FaFlask className="size-3 text-yellow-400 shrink-0" />
+                      <span>Formula Sheet</span>
+                    </div>
+                  )}
+                  {card.pyqCount && card.pyqCount > 0 && (
+                    <div className="flex items-center gap-1.5 text-xs text-zinc-400">
+                      <FaClipboardList className="size-3 text-yellow-400 shrink-0" />
+                      <span>{card.pyqCount} PYQs</span>
+                    </div>
+                  )}
+                  {card.mockTestCount && card.mockTestCount > 0 && (
+                    <div className="flex items-center gap-1.5 text-xs text-zinc-400">
+                      <FaClipboardList className="size-3 text-yellow-400 shrink-0" />
+                      <span>{card.mockTestCount} Mock Tests</span>
+                    </div>
+                  )}
+                  {card.aiQuestionsCount && card.aiQuestionsCount > 0 && (
+                    <div className="flex items-center gap-1.5 text-xs text-zinc-400">
+                      <FaBrain className="size-3 text-yellow-400 shrink-0" />
+                      <span>{card.aiQuestionsCount} AI Qs</span>
+                    </div>
+                  )}
+                  {card.videoUrl && (
+                    <div className="flex items-center gap-1.5 text-xs text-zinc-400">
+                      <FaVideo className="size-3 text-yellow-400 shrink-0" />
+                      <span>Video</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* CTA button */}
+                <button className={cn(
+                  "w-full py-2 rounded-xl text-xs font-bold transition-all duration-200",
+                  accessible
+                    ? `bg-linear-to-r ${config.gradient} text-black hover:opacity-90`
+                    : "bg-yellow-400/10 border border-yellow-400/30 text-yellow-400 hover:bg-yellow-400/20"
+                )}>
+                  {!user
+                    ? "Sign in to Access"
+                    : accessible
+                    ? "Start Learning →"
+                    : `Unlock with ${config.label} →`
+                  }
+                </button>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
