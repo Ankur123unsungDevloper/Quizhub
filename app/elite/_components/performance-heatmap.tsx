@@ -1,7 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { FaFire } from "react-icons/fa";
 import { MdBarChart } from "react-icons/md";
@@ -10,6 +9,7 @@ type Props = {
   userId: Id<"users">;
 };
 
+// Mock data — replace with real Convex query once you build userTopicStats.getByUser
 const mockTopics = [
   { name: "Kinematics",        accuracy: 88, attempts: 24 },
   { name: "Laws of Motion",    accuracy: 72, attempts: 18 },
@@ -41,11 +41,10 @@ function getTextColor(accuracy: number): string {
   return "text-red-400";
 }
 
-export const PerformanceHeatmap = ({ userId }: Props) => {
-  const stats = useQuery(api.userTopicStats?.getByUser ?? ("skip" as never), { userId });
-
-  // Use real stats if available, otherwise mock
-  const topics = (stats as typeof mockTopics | null | undefined) ?? mockTopics;
+export const PerformanceHeatmap = ({ userId: _ }: Props) => {
+  // TODO: Replace mockTopics with real Convex query when userTopicStats is built
+  // const stats = useQuery(api.userTopicStats.getByUser, { userId });
+  const topics = mockTopics;
 
   const avgAccuracy = Math.round(topics.reduce((s, t) => s + t.accuracy, 0) / topics.length);
   const weakTopics = topics.filter(t => t.accuracy < 50);
@@ -88,11 +87,9 @@ export const PerformanceHeatmap = ({ userId }: Props) => {
               <div
                 key={t.name}
                 className={`${getHeatColor(t.accuracy)} rounded-lg p-2 flex flex-col items-center justify-center text-center cursor-default group relative`}
-                title={`${t.name}: ${t.accuracy}% (${t.attempts} attempts)`}
               >
                 <p className="text-white text-xs font-bold">{t.accuracy}%</p>
                 <p className="text-white/70 text-[10px] leading-tight mt-0.5 line-clamp-2">{t.name}</p>
-                {/* Tooltip */}
                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10 bg-zinc-900 border border-zinc-700 rounded-lg px-2 py-1 text-xs text-white whitespace-nowrap shadow-xl">
                   {t.attempts} attempts
                 </div>
