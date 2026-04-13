@@ -74,7 +74,7 @@ const HomeTopbar = () => {
 
       {/* Left fade + arrow */}
       <div className="absolute left-0 top-0 h-full flex items-center z-10 pr-3
-        bg-gradient-to-r from-zinc-950 via-zinc-950/80 to-transparent">
+        bg-linear-to-r from-zinc-950 via-zinc-950/80 to-transparent">
         <button
           onClick={() => scroll("left")}
           className="w-7 h-7 rounded-full bg-zinc-800 border border-zinc-700
@@ -113,7 +113,7 @@ const HomeTopbar = () => {
 
       {/* Right fade + arrow */}
       <div className="absolute right-0 top-0 h-full flex items-center z-10 pl-3
-        bg-gradient-to-l from-zinc-950 via-zinc-950/80 to-transparent">
+        bg-linear-to-l from-zinc-950 via-zinc-950/80 to-transparent">
         <button
           onClick={() => scroll("right")}
           className="w-7 h-7 rounded-full bg-zinc-800 border border-zinc-700

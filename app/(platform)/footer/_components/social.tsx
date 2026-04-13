@@ -17,7 +17,7 @@ const Social = () => {
         </li>
         <li>
           <a
-            href="https://www.linkedin.com/company/quizhub"
+            href="https://www.linkedin.com/company/quizhub-official"
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-white transition"
@@ -37,7 +37,7 @@ const Social = () => {
         </li>
         <li>
           <a
-            href="https://www.instagram.com/quizhub"
+            href="https://www.instagram.com/quizhub.official"
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-white transition"

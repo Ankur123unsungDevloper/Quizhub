@@ -3,9 +3,7 @@
 
 import { useScrollTop } from "@/hooks/use-scroll-top";
 import { cn } from "@/lib/utils";
-
 import { Logo } from "@/components/logo";
-
 import SearchBar from "./_components/searchbar";
 import ActionButton from "./_components/action-button";
 import Sidebar from "./_components/sidebar/sidebar";
@@ -20,26 +18,35 @@ const Navbar = () => {
     setIsMounted(true);
   }, []);
 
-  
-  if (!isMounted) {
-    return null;
-  }
+  if (!isMounted) return null;
 
   return (
     <div
       className={cn(
-        "z-50 fixed top-0 flex flex-col items-center w-full pt-4 bg-zinc-900",
+        "z-50 fixed top-0 flex flex-col items-center w-full bg-zinc-900",
         scrolled && "border-b shadow-sm"
       )}
     >
-      <div className="flex flex-row items-center justify-center gap-x-50 w-full">
-        <div className="flex flex-row items-center justify-center gap-x-5">
+      {/* Main row */}
+      <div className="flex flex-row items-center justify-between w-full px-4 py-3 md:py-4 md:px-6">
+        {/* Left: sidebar + logo */}
+        <div className="flex flex-row items-center gap-x-3">
           <Sidebar />
           <Logo />
         </div>
-        <SearchBar />
+        {/* Center: searchbar — hidden on mobile, shown on md+ */}
+        <div className="hidden md:flex flex-1 mx-6">
+          <SearchBar />
+        </div>
+        {/* Right: action button */}
         <ActionButton />
       </div>
+      {/* Mobile searchbar — full width below main row */}
+      <div className="flex md:hidden w-full px-4 pb-3">
+        <SearchBar />
+      </div>
+
+      {/* Menu */}
       <Menu />
     </div>
   );
