@@ -37,7 +37,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="dark w-full h-full md:min-w-full">
+      <body className="dark w-full h-full">
         <Analytics />
         <SpeedInsights/>
         <ConvexClientProvider>
