@@ -83,8 +83,8 @@ export function Menu() {
   ];
 
   return (
-    <NavigationMenu>
-      <NavigationMenuList className="flex mt-6">
+  <NavigationMenu className="w-full max-w-full">
+    <NavigationMenuList className="flex mt-2 w-full overflow-x-auto scrollbar-hide px-2 gap-1">
         <NavigationMenuItem>
           <NavigationMenuLink asChild className={navigationMenuTriggerStyle({
             className: `
