@@ -28,7 +28,7 @@ const Navbar = () => {
   return (
     <div
       className={cn(
-        "z-50 fixed top-0 flex flex-col items-center w-full pt-4 bg-zinc-900 md:w-full",
+        "z-50 fixed top-0 flex flex-col items-center w-full pt-4 bg-zinc-900 md:max-w-full",
         scrolled && "border-b shadow-sm"
       )}
     >
