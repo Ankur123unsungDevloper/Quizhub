@@ -124,7 +124,7 @@ const SearchBar = () => {
   }, [results.length]);
 
   return (
-    <div ref={containerRef} className="relative w-full max-w-xl sm:hidden flex">
+    <div ref={containerRef} className="relative w-full max-w-xl hidden md:flex">
       <InputGroup className="max-w-xl h-12 border-[#FF8D28] border-4">
         <InputGroupInput
           placeholder="Search topics, exams..."
