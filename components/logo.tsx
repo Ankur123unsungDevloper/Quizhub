@@ -6,7 +6,7 @@ export const Logo = () => {
       {/* Mobile: image logo */}
       <div className="flex md:hidden">
         <Image
-          src="/logo.png"
+          src="/logo.svg"
           alt="QuizHub"
           width={36}
           height={36}
